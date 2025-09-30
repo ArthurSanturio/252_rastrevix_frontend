@@ -1,6 +1,4 @@
-import { API_CONFIG } from '../config/api';
-
-const API_BASE_URL = API_CONFIG.BASE_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://two52-rastrevix-backend.onrender.com/api';
 
 export interface LoginCredentials {
   email: string;
@@ -223,7 +221,9 @@ class ApiService {
   async testConnection(): Promise<boolean> {
     try {
       log('Testing connection to backend');
-      const response = await fetch(`${this.baseURL}/health`, {
+      // Remove /api from baseURL for health check
+      const healthUrl = this.baseURL.replace('/api', '') + '/health';
+      const response = await fetch(healthUrl, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -231,7 +231,7 @@ class ApiService {
       });
       
       const isConnected = response.ok;
-      log('Connection test result', { isConnected, status: response.status });
+      log('Connection test result', { isConnected, status: response.status, healthUrl });
       return isConnected;
     } catch (error) {
       log('Connection test failed', { error: error instanceof Error ? error.message : 'Unknown error' });
