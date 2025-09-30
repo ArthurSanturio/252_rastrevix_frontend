@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, useLocation, Navigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
+import ConnectionStatus from './ConnectionStatus';
 import { useAuth } from '../contexts/AuthContext';
 
 const Layout: React.FC = () => {
@@ -65,6 +66,14 @@ const Layout: React.FC = () => {
       />
 
       <div className={`main-container ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+        <div className="main-header">
+          <div className="page-title">
+            <h1>Rastrevix</h1>
+          </div>
+          <div className="header-actions">
+            <ConnectionStatus />
+          </div>
+        </div>
         <main className="main-content">
           <Outlet />
         </main>
