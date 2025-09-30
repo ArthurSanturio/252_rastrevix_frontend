@@ -109,7 +109,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       setUser(response.data.user);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro no login';
+      let errorMessage = 'Erro no login';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Credenciais inválidas')) {
+          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.';
+        } else if (error.message.includes('Conta inativa')) {
+          errorMessage = 'Sua conta está inativa. Entre em contato com o administrador.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setError(errorMessage);
       throw error;
     } finally {
@@ -131,7 +144,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setIsAuthenticated(true);
       setUser(response.data.user);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Erro no registro';
+      let errorMessage = 'Erro no registro';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('Email já está em uso')) {
+          errorMessage = 'Este email já está cadastrado. Tente fazer login ou use outro email.';
+        } else if (error.message.includes('Failed to fetch')) {
+          errorMessage = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        } else if (error.message.includes('Dados de entrada inválidos')) {
+          errorMessage = 'Verifique os dados informados e tente novamente.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
       setError(errorMessage);
       throw error;
     } finally {
