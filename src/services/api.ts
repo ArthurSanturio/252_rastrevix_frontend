@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://two52-rastrevix-backend.onrender.com/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 export interface LoginCredentials {
   email: string;
@@ -68,7 +68,7 @@ class ApiService {
     retryCount: number = 0
   ): Promise<T> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const defaultHeaders: HeadersInit = {
       'Content-Type': 'application/json',
     };
@@ -87,19 +87,19 @@ class ApiService {
       },
     };
 
-    log(`Making request to ${endpoint}`, { 
-      method: options.method || 'GET', 
+    log(`Making request to ${endpoint}`, {
+      method: options.method || 'GET',
       retryCount,
-      hasToken: !!token 
+      hasToken: !!token
     });
 
     try {
       const response = await fetch(url, config);
-      
-      log(`Response received`, { 
-        status: response.status, 
+
+      log(`Response received`, {
+        status: response.status,
         ok: response.ok,
-        endpoint 
+        endpoint
       });
 
       if (!response.ok) {
@@ -114,13 +114,13 @@ class ApiService {
         }
 
         // Retry on server errors (5xx) or network issues
-        if (retryCount < this.retryAttempts && 
-            (response.status >= 500 || response.status === 0)) {
-          log(`Retrying request (${retryCount + 1}/${this.retryAttempts})`, { 
-            endpoint, 
-            status: response.status 
+        if (retryCount < this.retryAttempts &&
+          (response.status >= 500 || response.status === 0)) {
+          log(`Retrying request (${retryCount + 1}/${this.retryAttempts})`, {
+            endpoint,
+            status: response.status
           });
-          
+
           await this.delay(this.retryDelay * (retryCount + 1));
           return this.request<T>(endpoint, options, retryCount + 1);
         }
@@ -133,13 +133,13 @@ class ApiService {
       return data;
     } catch (error) {
       log(`Request failed`, { endpoint, error: error instanceof Error ? error.message : 'Unknown error' });
-      
+
       // Retry on network errors
-      if (retryCount < this.retryAttempts && 
-          error instanceof Error && 
-          (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
+      if (retryCount < this.retryAttempts &&
+        error instanceof Error &&
+        (error.message.includes('Failed to fetch') || error.message.includes('NetworkError'))) {
         log(`Retrying request due to network error (${retryCount + 1}/${this.retryAttempts})`, { endpoint });
-        
+
         await this.delay(this.retryDelay * (retryCount + 1));
         return this.request<T>(endpoint, options, retryCount + 1);
       }
@@ -229,7 +229,7 @@ class ApiService {
           'Content-Type': 'application/json',
         },
       });
-      
+
       const isConnected = response.ok;
       log('Connection test result', { isConnected, status: response.status, healthUrl });
       return isConnected;
