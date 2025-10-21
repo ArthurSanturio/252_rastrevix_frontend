@@ -3,6 +3,9 @@
 import type React from "react"
 import { useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
+import ClienteModal from "../components/ClienteModal"
+import ClienteDetalhesModal from "../components/ClienteDetalhesModal"
+import ClienteEditarModal from "../components/ClienteEditarModal"
 import "../styles/dashboard-pages.css"
 
 interface Cliente {
@@ -21,6 +24,10 @@ const CadastroCliente: React.FC = () => {
   const userName = user?.name || "Usuário"
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("todos")
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false)
+  const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
 
   // Dados mockados dos clientes
   const clientes: Cliente[] = [
@@ -99,11 +106,11 @@ const CadastroCliente: React.FC = () => {
   // Filtrar clientes baseado na busca e status
   const clientesFiltrados = clientes.filter(cliente => {
     const matchesSearch = cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cliente.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         cliente.email.toLowerCase().includes(searchTerm.toLowerCase())
-    
+      cliente.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cliente.email.toLowerCase().includes(searchTerm.toLowerCase())
+
     const matchesStatus = statusFilter === "todos" || cliente.status === statusFilter
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -131,6 +138,38 @@ const CadastroCliente: React.FC = () => {
       default:
         return status.toUpperCase()
     }
+  }
+
+  const handleSaveCliente = (novoCliente: any) => {
+    // Aqui você pode integrar com a API para salvar o cliente
+    console.log('Novo cliente:', novoCliente)
+
+    // Por enquanto, apenas mostra um alerta
+    alert(`Cliente ${novoCliente.nome} cadastrado com sucesso!`)
+
+    // Em uma implementação real, você faria uma chamada para a API
+    // e atualizaria a lista de clientes
+  }
+
+  const handleVerDetalhes = (cliente: Cliente) => {
+    setClienteSelecionado(cliente)
+    setIsDetalhesModalOpen(true)
+  }
+
+  const handleEditarCliente = (cliente: Cliente) => {
+    setClienteSelecionado(cliente)
+    setIsEditarModalOpen(true)
+  }
+
+  const handleSalvarEdicao = (clienteAtualizado: Cliente) => {
+    // Aqui você pode integrar com a API para atualizar o cliente
+    console.log('Cliente atualizado:', clienteAtualizado)
+
+    // Por enquanto, apenas mostra um alerta
+    alert(`Cliente ${clienteAtualizado.nome} atualizado com sucesso!`)
+
+    // Em uma implementação real, você faria uma chamada para a API
+    // e atualizaria a lista de clientes
   }
 
   return (
@@ -204,7 +243,15 @@ const CadastroCliente: React.FC = () => {
 
       {/* Lista de Clientes */}
       <div className="clientes-list-container">
-        <h2>Clientes Cadastrados ({clientesFiltrados.length})</h2>
+        <div className="add-cliente-section">
+          <h2>Clientes Cadastrados ({clientesFiltrados.length})</h2>
+          <button
+            className="btn-add-cliente"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Adicionar Cliente
+          </button>
+        </div>
         <div className="clientes-list">
           {clientesFiltrados.length === 0 ? (
             <div className="no-results">
@@ -244,14 +291,44 @@ const CadastroCliente: React.FC = () => {
                   </div>
                 </div>
                 <div className="cliente-actions">
-                  <button className="btn btn-primary">Editar</button>
-                  <button className="btn btn-secondary">Ver Detalhes</button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleEditarCliente(cliente)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => handleVerDetalhes(cliente)}
+                  >
+                    Ver Detalhes
+                  </button>
                 </div>
               </div>
             ))
           )}
         </div>
       </div>
+
+      {/* Modais */}
+      <ClienteModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveCliente}
+      />
+
+      <ClienteDetalhesModal
+        isOpen={isDetalhesModalOpen}
+        onClose={() => setIsDetalhesModalOpen(false)}
+        cliente={clienteSelecionado}
+      />
+
+      <ClienteEditarModal
+        isOpen={isEditarModalOpen}
+        onClose={() => setIsEditarModalOpen(false)}
+        cliente={clienteSelecionado}
+        onSave={handleSalvarEdicao}
+      />
     </div>
   )
 }

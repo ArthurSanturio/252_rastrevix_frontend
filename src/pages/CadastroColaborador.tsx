@@ -3,7 +3,11 @@
 import type React from "react"
 import { useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
+import ColaboradorModal from "../components/ColaboradorModal"
+import ColaboradorDetalhesModal from "../components/ColaboradorDetalhesModal"
+import ColaboradorEditarModal from "../components/ColaboradorEditarModal"
 import "../styles/colaboradores.css"
+import "../styles/dashboard-pages.css"
 
 interface Colaborador {
   id: number
@@ -23,6 +27,10 @@ const CadastroColaborador: React.FC = () => {
   const userName = user?.name || "Usuário"
   const [searchTerm, setSearchTerm] = useState("")
   const [statusFilter, setStatusFilter] = useState<string>("todos")
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false)
+  const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
+  const [colaboradorSelecionado, setColaboradorSelecionado] = useState<Colaborador | null>(null)
 
   // Dados mockados dos colaboradores
   const colaboradores: Colaborador[] = [
@@ -127,12 +135,12 @@ const CadastroColaborador: React.FC = () => {
   // Filtrar colaboradores baseado na busca e status
   const colaboradoresFiltrados = colaboradores.filter(colaborador => {
     const matchesSearch = colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         colaborador.cargo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         colaborador.departamento.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         colaborador.email.toLowerCase().includes(searchTerm.toLowerCase())
-    
+      colaborador.cargo.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      colaborador.departamento.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      colaborador.email.toLowerCase().includes(searchTerm.toLowerCase())
+
     const matchesStatus = statusFilter === "todos" || colaborador.status === statusFilter
-    
+
     return matchesSearch && matchesStatus
   })
 
@@ -160,6 +168,38 @@ const CadastroColaborador: React.FC = () => {
       default:
         return status.toUpperCase()
     }
+  }
+
+  const handleSaveColaborador = (novoColaborador: any) => {
+    // Aqui você pode integrar com a API para salvar o colaborador
+    console.log('Novo colaborador:', novoColaborador)
+
+    // Por enquanto, apenas mostra um alerta
+    alert(`Colaborador ${novoColaborador.nome} cadastrado com sucesso!`)
+
+    // Em uma implementação real, você faria uma chamada para a API
+    // e atualizaria a lista de colaboradores
+  }
+
+  const handleVerDetalhes = (colaborador: Colaborador) => {
+    setColaboradorSelecionado(colaborador)
+    setIsDetalhesModalOpen(true)
+  }
+
+  const handleEditarColaborador = (colaborador: Colaborador) => {
+    setColaboradorSelecionado(colaborador)
+    setIsEditarModalOpen(true)
+  }
+
+  const handleSalvarEdicao = (colaboradorAtualizado: Colaborador) => {
+    // Aqui você pode integrar com a API para atualizar o colaborador
+    console.log('Colaborador atualizado:', colaboradorAtualizado)
+
+    // Por enquanto, apenas mostra um alerta
+    alert(`Colaborador ${colaboradorAtualizado.nome} atualizado com sucesso!`)
+
+    // Em uma implementação real, você faria uma chamada para a API
+    // e atualizaria a lista de colaboradores
   }
 
   return (
@@ -233,7 +273,15 @@ const CadastroColaborador: React.FC = () => {
 
       {/* Lista de Colaboradores */}
       <div className="colaboradores-list-container">
-        <h2>Colaboradores Cadastrados ({colaboradoresFiltrados.length})</h2>
+        <div className="add-colaborador-section">
+          <h2>Colaboradores Cadastrados ({colaboradoresFiltrados.length})</h2>
+          <button
+            className="btn-add-colaborador"
+            onClick={() => setIsModalOpen(true)}
+          >
+            Adicionar Colaborador
+          </button>
+        </div>
         <div className="colaboradores-list">
           {colaboradoresFiltrados.length === 0 ? (
             <div className="no-results">
@@ -281,14 +329,44 @@ const CadastroColaborador: React.FC = () => {
                   </div>
                 </div>
                 <div className="colaborador-actions">
-                  <button className="btn btn-primary">Editar</button>
-                  <button className="btn btn-secondary">Ver Detalhes</button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleEditarColaborador(colaborador)}
+                  >
+                    Editar
+                  </button>
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => handleVerDetalhes(colaborador)}
+                  >
+                    Ver Detalhes
+                  </button>
                 </div>
               </div>
             ))
           )}
         </div>
       </div>
+
+      {/* Modais */}
+      <ColaboradorModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSaveColaborador}
+      />
+
+      <ColaboradorDetalhesModal
+        isOpen={isDetalhesModalOpen}
+        onClose={() => setIsDetalhesModalOpen(false)}
+        colaborador={colaboradorSelecionado}
+      />
+
+      <ColaboradorEditarModal
+        isOpen={isEditarModalOpen}
+        onClose={() => setIsEditarModalOpen(false)}
+        colaborador={colaboradorSelecionado}
+        onSave={handleSalvarEdicao}
+      />
     </div>
   )
 }
