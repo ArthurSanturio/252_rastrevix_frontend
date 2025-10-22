@@ -1,25 +1,59 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import ColaboradorModal from "../components/ColaboradorModal"
 import ColaboradorDetalhesModal from "../components/ColaboradorDetalhesModal"
 import ColaboradorEditarModal from "../components/ColaboradorEditarModal"
+import { colaboradorService } from "../services/colaboradorService"
 import "../styles/colaboradores.css"
 import "../styles/dashboard-pages.css"
 
+// Interfaces locais para evitar problemas de importação
 interface Colaborador {
-  id: number
-  nome: string
-  email: string
-  telefone: string
-  cargo: string
-  departamento: string
-  status: 'ativo' | 'inativo' | 'treinamento'
-  dataContratacao: string
-  ultimaAtualizacao: string
-  salario: string
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  cargo: string;
+  departamento: 'tecnologia' | 'gestao' | 'analise' | 'design' | 'comercial' | 'administrativo' | 'rh' | 'financeiro' | 'operacoes' | 'marketing';
+  status: 'ativo' | 'inativo' | 'treinamento';
+  salario?: number;
+  dataContratacao: string;
+  dataDemissao?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  cpf?: string;
+  rg?: string;
+  dataNascimento?: string;
+  observacoes?: string;
+  supervisorId?: string;
+  dataCadastro: string;
+  ultimaAtualizacao: string;
+}
+
+interface ColaboradorCreateData {
+  nome: string;
+  email: string;
+  telefone: string;
+  cargo: string;
+  departamento: 'tecnologia' | 'gestao' | 'analise' | 'design' | 'comercial' | 'administrativo' | 'rh' | 'financeiro' | 'operacoes' | 'marketing';
+  status?: 'ativo' | 'inativo' | 'treinamento';
+  salario?: number;
+  dataContratacao: string;
+  dataDemissao?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  cpf?: string;
+  rg?: string;
+  dataNascimento?: string;
+  observacoes?: string;
+  supervisorId?: string;
 }
 
 const CadastroColaborador: React.FC = () => {
@@ -32,107 +66,64 @@ const CadastroColaborador: React.FC = () => {
   const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
   const [colaboradorSelecionado, setColaboradorSelecionado] = useState<Colaborador | null>(null)
 
-  // Dados mockados dos colaboradores
-  const colaboradores: Colaborador[] = [
-    {
-      id: 1,
-      nome: "João Silva",
-      email: "joao.silva@empresa.com",
-      telefone: "(11) 99999-9999",
-      cargo: "Desenvolvedor Senior",
-      departamento: "Tecnologia",
-      status: "ativo",
-      dataContratacao: "15/01/2023",
-      ultimaAtualizacao: "20/01/2024",
-      salario: "R$ 8.500,00"
-    },
-    {
-      id: 2,
-      nome: "Maria Santos",
-      email: "maria.santos@empresa.com",
-      telefone: "(11) 88888-8888",
-      cargo: "Gerente de Projetos",
-      departamento: "Gestão",
-      status: "ativo",
-      dataContratacao: "10/03/2023",
-      ultimaAtualizacao: "18/01/2024",
-      salario: "R$ 12.000,00"
-    },
-    {
-      id: 3,
-      nome: "Pedro Oliveira",
-      email: "pedro.oliveira@empresa.com",
-      telefone: "(11) 77777-7777",
-      cargo: "Analista Junior",
-      departamento: "Análise",
-      status: "treinamento",
-      dataContratacao: "22/01/2024",
-      ultimaAtualizacao: "22/01/2024",
-      salario: "R$ 4.200,00"
-    },
-    {
-      id: 4,
-      nome: "Ana Costa",
-      email: "ana.costa@empresa.com",
-      telefone: "(11) 66666-6666",
-      cargo: "Designer UX/UI",
-      departamento: "Design",
-      status: "ativo",
-      dataContratacao: "05/06/2023",
-      ultimaAtualizacao: "19/01/2024",
-      salario: "R$ 6.800,00"
-    },
-    {
-      id: 5,
-      nome: "Carlos Ferreira",
-      email: "carlos.ferreira@empresa.com",
-      telefone: "(11) 55555-5555",
-      cargo: "Estagiário",
-      departamento: "Tecnologia",
-      status: "treinamento",
-      dataContratacao: "25/01/2024",
-      ultimaAtualizacao: "25/01/2024",
-      salario: "R$ 1.200,00"
-    },
-    {
-      id: 6,
-      nome: "Lucia Mendes",
-      email: "lucia.mendes@empresa.com",
-      telefone: "(11) 44444-4444",
-      cargo: "Coordenadora de Vendas",
-      departamento: "Comercial",
-      status: "ativo",
-      dataContratacao: "12/08/2023",
-      ultimaAtualizacao: "21/01/2024",
-      salario: "R$ 9.500,00"
-    },
-    {
-      id: 7,
-      nome: "Roberto Lima",
-      email: "roberto.lima@empresa.com",
-      telefone: "(11) 33333-3333",
-      cargo: "Assistente Administrativo",
-      departamento: "Administrativo",
-      status: "inativo",
-      dataContratacao: "01/01/2022",
-      ultimaAtualizacao: "10/01/2024",
-      salario: "R$ 3.500,00"
-    },
-    {
-      id: 8,
-      nome: "Fernanda Rocha",
-      email: "fernanda.rocha@empresa.com",
-      telefone: "(11) 22222-2222",
-      cargo: "Analista de RH",
-      departamento: "Recursos Humanos",
-      status: "ativo",
-      dataContratacao: "15/09/2023",
-      ultimaAtualizacao: "23/01/2024",
-      salario: "R$ 5.200,00"
-    }
-  ]
+  // Estados para dados reais
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState({
+    total: 0,
+    ativos: 0,
+    inativos: 0,
+    treinamento: 0
+  })
 
-  // Filtrar colaboradores baseado na busca e status
+  // Carregar dados dos colaboradores
+  const carregarColaboradores = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await colaboradorService.listarColaboradores({
+        search: searchTerm || undefined,
+        status: statusFilter !== "todos" ? statusFilter : undefined,
+        limit: 100 // Carregar mais colaboradores para demonstração
+      })
+
+      setColaboradores(response.data.colaboradores)
+    } catch (err) {
+      console.error('Erro ao carregar colaboradores:', err)
+      setError('Erro ao carregar colaboradores. Verifique sua conexão.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Carregar estatísticas
+  const carregarEstatisticas = async () => {
+    try {
+      const response = await colaboradorService.obterEstatisticas()
+      setStats(response.data)
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas:', err)
+    }
+  }
+
+  // Carregar dados quando o componente monta
+  useEffect(() => {
+    carregarColaboradores()
+    carregarEstatisticas()
+  }, [])
+
+  // Recarregar quando filtros mudam
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      carregarColaboradores()
+    }, 500) // Debounce de 500ms
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, statusFilter])
+
+  // Filtrar colaboradores localmente (já vem filtrado da API, mas mantemos para consistência)
   const colaboradoresFiltrados = colaboradores.filter(colaborador => {
     const matchesSearch = colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       colaborador.cargo.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -170,15 +161,20 @@ const CadastroColaborador: React.FC = () => {
     }
   }
 
-  const handleSaveColaborador = (novoColaborador: any) => {
-    // Aqui você pode integrar com a API para salvar o colaborador
-    console.log('Novo colaborador:', novoColaborador)
+  const handleSaveColaborador = async (novoColaborador: ColaboradorCreateData) => {
+    try {
+      await colaboradorService.criarColaborador(novoColaborador)
 
-    // Por enquanto, apenas mostra um alerta
+      // Recarregar lista de colaboradores e estatísticas
+      await carregarColaboradores()
+      await carregarEstatisticas()
+
     alert(`Colaborador ${novoColaborador.nome} cadastrado com sucesso!`)
-
-    // Em uma implementação real, você faria uma chamada para a API
-    // e atualizaria a lista de colaboradores
+      setIsModalOpen(false)
+    } catch (err) {
+      console.error('Erro ao salvar colaborador:', err)
+      alert('Erro ao cadastrar colaborador. Tente novamente.')
+    }
   }
 
   const handleVerDetalhes = (colaborador: Colaborador) => {
@@ -191,15 +187,45 @@ const CadastroColaborador: React.FC = () => {
     setIsEditarModalOpen(true)
   }
 
-  const handleSalvarEdicao = (colaboradorAtualizado: Colaborador) => {
-    // Aqui você pode integrar com a API para atualizar o colaborador
-    console.log('Colaborador atualizado:', colaboradorAtualizado)
+  const handleSalvarEdicao = async (colaboradorAtualizado: Colaborador) => {
+    try {
+      // Preparar dados para envio, removendo campos vazios
+      const dadosParaEnvio = {
+        id: colaboradorAtualizado.id,
+        nome: colaboradorAtualizado.nome,
+        email: colaboradorAtualizado.email,
+        telefone: colaboradorAtualizado.telefone,
+        cargo: colaboradorAtualizado.cargo,
+        departamento: colaboradorAtualizado.departamento,
+        status: colaboradorAtualizado.status,
+        salario: colaboradorAtualizado.salario || undefined,
+        dataContratacao: colaboradorAtualizado.dataContratacao,
+        dataDemissao: colaboradorAtualizado.dataDemissao || undefined,
+        endereco: colaboradorAtualizado.endereco || undefined,
+        cidade: colaboradorAtualizado.cidade || undefined,
+        estado: colaboradorAtualizado.estado || undefined,
+        cep: colaboradorAtualizado.cep || undefined,
+        cpf: colaboradorAtualizado.cpf || undefined,
+        rg: colaboradorAtualizado.rg || undefined,
+        dataNascimento: colaboradorAtualizado.dataNascimento || undefined,
+        observacoes: colaboradorAtualizado.observacoes || undefined,
+        supervisorId: colaboradorAtualizado.supervisorId || undefined
+      }
 
-    // Por enquanto, apenas mostra um alerta
+      console.log('Dados sendo enviados para atualização:', dadosParaEnvio)
+
+      await colaboradorService.atualizarColaborador(dadosParaEnvio)
+
+      // Recarregar lista de colaboradores e estatísticas
+      await carregarColaboradores()
+      await carregarEstatisticas()
+
     alert(`Colaborador ${colaboradorAtualizado.nome} atualizado com sucesso!`)
-
-    // Em uma implementação real, você faria uma chamada para a API
-    // e atualizaria a lista de colaboradores
+      setIsEditarModalOpen(false)
+    } catch (err) {
+      console.error('Erro ao atualizar colaborador:', err)
+      alert('Erro ao atualizar colaborador. Tente novamente.')
+    }
   }
 
   return (
@@ -214,15 +240,15 @@ const CadastroColaborador: React.FC = () => {
         <div className="card card-elevated">
           <div className="stats-content">
             <h3>TOTAL DE COLABORADORES</h3>
-            <p className="stats-number">{colaboradores.length}</p>
-            <span className="stats-change positive">+{colaboradores.filter(c => c.status === 'ativo').length} ativos</span>
+            <p className="stats-number">{stats.total}</p>
+            <span className="stats-change positive">+{stats.ativos} ativos</span>
           </div>
         </div>
 
         <div className="card card-elevated">
           <div className="stats-content">
             <h3>COLABORADORES ATIVOS</h3>
-            <p className="stats-number">{colaboradores.filter(c => c.status === 'ativo').length}</p>
+            <p className="stats-number">{stats.ativos}</p>
             <span className="stats-change positive">Ativos no sistema</span>
           </div>
         </div>
@@ -230,7 +256,7 @@ const CadastroColaborador: React.FC = () => {
         <div className="card card-elevated">
           <div className="stats-content">
             <h3>EM TREINAMENTO</h3>
-            <p className="stats-number">{colaboradores.filter(c => c.status === 'treinamento').length}</p>
+            <p className="stats-number">{stats.treinamento}</p>
             <span className="stats-change warning">Aguardando conclusão</span>
           </div>
         </div>
@@ -238,7 +264,7 @@ const CadastroColaborador: React.FC = () => {
         <div className="card card-elevated">
           <div className="stats-content">
             <h3>INATIVOS</h3>
-            <p className="stats-number">{colaboradores.filter(c => c.status === 'inativo').length}</p>
+            <p className="stats-number">{stats.inativos}</p>
             <span className="stats-change negative">Colaboradores inativos</span>
           </div>
         </div>
@@ -283,7 +309,18 @@ const CadastroColaborador: React.FC = () => {
           </button>
         </div>
         <div className="colaboradores-list">
-          {colaboradoresFiltrados.length === 0 ? (
+          {loading ? (
+            <div className="loading-state">
+              <p>Carregando colaboradores...</p>
+            </div>
+          ) : error ? (
+            <div className="error-state">
+              <p>{error}</p>
+              <button onClick={carregarColaboradores} className="btn btn-primary">
+                Tentar Novamente
+              </button>
+            </div>
+          ) : colaboradoresFiltrados.length === 0 ? (
             <div className="no-results">
               <p>Nenhum colaborador encontrado com os filtros aplicados.</p>
             </div>
@@ -316,15 +353,17 @@ const CadastroColaborador: React.FC = () => {
                     </div>
                     <div className="detail-group">
                       <span className="detail-label">Salário:</span>
-                      <span className="detail-value">{colaborador.salario}</span>
+                      <span className="detail-value">
+                        {colaborador.salario ? `R$ ${colaborador.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Não informado'}
+                      </span>
                     </div>
                     <div className="detail-group">
                       <span className="detail-label">Contratado em:</span>
-                      <span className="detail-value">{colaborador.dataContratacao}</span>
+                      <span className="detail-value">{new Date(colaborador.dataContratacao).toLocaleDateString('pt-BR')}</span>
                     </div>
                     <div className="detail-group">
                       <span className="detail-label">Última atualização:</span>
-                      <span className="detail-value">{colaborador.ultimaAtualizacao}</span>
+                      <span className="detail-value">{new Date(colaborador.ultimaAtualizacao).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
                 </div>

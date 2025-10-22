@@ -1,22 +1,48 @@
 "use client"
 
 import type React from "react"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import ClienteModal from "../components/ClienteModal"
 import ClienteDetalhesModal from "../components/ClienteDetalhesModal"
 import ClienteEditarModal from "../components/ClienteEditarModal"
+import { clienteService } from "../services/clienteService"
 import "../styles/dashboard-pages.css"
 
+// Interfaces locais para evitar problemas de importação
 interface Cliente {
-  id: number
-  nome: string
-  email: string
-  telefone: string
-  empresa: string
-  status: 'ativo' | 'inativo' | 'pendente'
-  dataCadastro: string
-  ultimaAtualizacao: string
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  empresa: string;
+  status: 'ativo' | 'inativo' | 'pendente';
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  cnpj?: string;
+  observacoes?: string;
+  contatoResponsavel?: string;
+  telefoneResponsavel?: string;
+  dataCadastro: string;
+  ultimaAtualizacao: string;
+}
+
+interface ClienteCreateData {
+  nome: string;
+  email: string;
+  telefone: string;
+  empresa: string;
+  status?: 'ativo' | 'inativo' | 'pendente';
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  cnpj?: string;
+  observacoes?: string;
+  contatoResponsavel?: string;
+  telefoneResponsavel?: string;
 }
 
 const CadastroCliente: React.FC = () => {
@@ -29,81 +55,64 @@ const CadastroCliente: React.FC = () => {
   const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
 
-  // Dados mockados dos clientes
-  const clientes: Cliente[] = [
-    {
-      id: 1,
-      nome: "João Silva",
-      email: "joao.silva@techcorp.com",
-      telefone: "(11) 99999-9999",
-      empresa: "TechCorp Solutions",
-      status: "ativo",
-      dataCadastro: "15/01/2024",
-      ultimaAtualizacao: "20/01/2024"
-    },
-    {
-      id: 2,
-      nome: "Maria Santos",
-      email: "maria.santos@globalind.com",
-      telefone: "(11) 88888-8888",
-      empresa: "Global Industries",
-      status: "ativo",
-      dataCadastro: "10/01/2024",
-      ultimaAtualizacao: "18/01/2024"
-    },
-    {
-      id: 3,
-      nome: "Pedro Oliveira",
-      email: "pedro@startupxyz.com",
-      telefone: "(11) 77777-7777",
-      empresa: "StartupXYZ",
-      status: "pendente",
-      dataCadastro: "22/01/2024",
-      ultimaAtualizacao: "22/01/2024"
-    },
-    {
-      id: 4,
-      nome: "Ana Costa",
-      email: "ana.costa@megacorp.com",
-      telefone: "(11) 66666-6666",
-      empresa: "MegaCorp Ltd",
-      status: "ativo",
-      dataCadastro: "05/01/2024",
-      ultimaAtualizacao: "19/01/2024"
-    },
-    {
-      id: 5,
-      nome: "Carlos Ferreira",
-      email: "carlos@innovationlabs.com",
-      telefone: "(11) 55555-5555",
-      empresa: "Innovation Labs",
-      status: "pendente",
-      dataCadastro: "25/01/2024",
-      ultimaAtualizacao: "25/01/2024"
-    },
-    {
-      id: 6,
-      nome: "Lucia Mendes",
-      email: "lucia@futuresystems.com",
-      telefone: "(11) 44444-4444",
-      empresa: "Future Systems",
-      status: "ativo",
-      dataCadastro: "12/01/2024",
-      ultimaAtualizacao: "21/01/2024"
-    },
-    {
-      id: 7,
-      nome: "Roberto Lima",
-      email: "roberto@inactivecorp.com",
-      telefone: "(11) 33333-3333",
-      empresa: "Inactive Corp",
-      status: "inativo",
-      dataCadastro: "01/01/2024",
-      ultimaAtualizacao: "10/01/2024"
-    }
-  ]
+  // Estados para dados reais
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [stats, setStats] = useState({
+    total: 0,
+    ativos: 0,
+    inativos: 0,
+    pendentes: 0
+  })
 
-  // Filtrar clientes baseado na busca e status
+  // Carregar dados dos clientes
+  const carregarClientes = async () => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      const response = await clienteService.listarClientes({
+        search: searchTerm || undefined,
+        status: statusFilter !== "todos" ? statusFilter : undefined,
+        limit: 100 // Carregar mais clientes para demonstração
+      })
+
+      setClientes(response.data.clientes)
+    } catch (err) {
+      console.error('Erro ao carregar clientes:', err)
+      setError('Erro ao carregar clientes. Verifique sua conexão.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Carregar estatísticas
+  const carregarEstatisticas = async () => {
+    try {
+      const response = await clienteService.obterEstatisticas()
+      setStats(response.data)
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas:', err)
+    }
+  }
+
+  // Carregar dados quando o componente monta
+  useEffect(() => {
+    carregarClientes()
+    carregarEstatisticas()
+  }, [])
+
+  // Recarregar quando filtros mudam
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      carregarClientes()
+    }, 500) // Debounce de 500ms
+
+    return () => clearTimeout(timeoutId)
+  }, [searchTerm, statusFilter])
+
+  // Filtrar clientes localmente (já vem filtrado da API, mas mantemos para consistência)
   const clientesFiltrados = clientes.filter(cliente => {
     const matchesSearch = cliente.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
       cliente.empresa.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -140,15 +149,20 @@ const CadastroCliente: React.FC = () => {
     }
   }
 
-  const handleSaveCliente = (novoCliente: any) => {
-    // Aqui você pode integrar com a API para salvar o cliente
-    console.log('Novo cliente:', novoCliente)
+  const handleSaveCliente = async (novoCliente: ClienteCreateData) => {
+    try {
+      await clienteService.criarCliente(novoCliente)
 
-    // Por enquanto, apenas mostra um alerta
-    alert(`Cliente ${novoCliente.nome} cadastrado com sucesso!`)
+      // Recarregar lista de clientes e estatísticas
+      await carregarClientes()
+      await carregarEstatisticas()
 
-    // Em uma implementação real, você faria uma chamada para a API
-    // e atualizaria a lista de clientes
+      alert(`Cliente ${novoCliente.nome} cadastrado com sucesso!`)
+      setIsModalOpen(false)
+    } catch (err) {
+      console.error('Erro ao salvar cliente:', err)
+      alert('Erro ao cadastrar cliente. Tente novamente.')
+    }
   }
 
   const handleVerDetalhes = (cliente: Cliente) => {
@@ -161,15 +175,40 @@ const CadastroCliente: React.FC = () => {
     setIsEditarModalOpen(true)
   }
 
-  const handleSalvarEdicao = (clienteAtualizado: Cliente) => {
-    // Aqui você pode integrar com a API para atualizar o cliente
-    console.log('Cliente atualizado:', clienteAtualizado)
+  const handleSalvarEdicao = async (clienteAtualizado: Cliente) => {
+    try {
+      // Preparar dados para envio, removendo campos vazios
+      const dadosParaEnvio = {
+        id: clienteAtualizado.id,
+        nome: clienteAtualizado.nome,
+        email: clienteAtualizado.email,
+        telefone: clienteAtualizado.telefone,
+        empresa: clienteAtualizado.empresa,
+        status: clienteAtualizado.status,
+        endereco: clienteAtualizado.endereco || undefined,
+        cidade: clienteAtualizado.cidade || undefined,
+        estado: clienteAtualizado.estado || undefined,
+        cep: clienteAtualizado.cep || undefined,
+        cnpj: clienteAtualizado.cnpj || undefined,
+        observacoes: clienteAtualizado.observacoes || undefined,
+        contatoResponsavel: clienteAtualizado.contatoResponsavel || undefined,
+        telefoneResponsavel: clienteAtualizado.telefoneResponsavel || undefined
+      }
 
-    // Por enquanto, apenas mostra um alerta
-    alert(`Cliente ${clienteAtualizado.nome} atualizado com sucesso!`)
+      console.log('Dados sendo enviados para atualização:', dadosParaEnvio)
 
-    // Em uma implementação real, você faria uma chamada para a API
-    // e atualizaria a lista de clientes
+      await clienteService.atualizarCliente(dadosParaEnvio)
+
+      // Recarregar lista de clientes e estatísticas
+      await carregarClientes()
+      await carregarEstatisticas()
+
+      alert(`Cliente ${clienteAtualizado.nome} atualizado com sucesso!`)
+      setIsEditarModalOpen(false)
+    } catch (err) {
+      console.error('Erro ao atualizar cliente:', err)
+      alert('Erro ao atualizar cliente. Tente novamente.')
+    }
   }
 
   return (
@@ -184,15 +223,15 @@ const CadastroCliente: React.FC = () => {
         <div className="card card-elevated">
           <div className="stats-content">
             <h3>TOTAL DE CLIENTES</h3>
-            <p className="stats-number">{clientes.length}</p>
-            <span className="stats-change positive">+{clientes.filter(c => c.status === 'ativo').length} ativos</span>
+            <p className="stats-number">{stats.total}</p>
+            <span className="stats-change positive">+{stats.ativos} ativos</span>
           </div>
         </div>
 
         <div className="card card-elevated">
           <div className="stats-content">
             <h3>CLIENTES ATIVOS</h3>
-            <p className="stats-number">{clientes.filter(c => c.status === 'ativo').length}</p>
+            <p className="stats-number">{stats.ativos}</p>
             <span className="stats-change positive">Ativos no sistema</span>
           </div>
         </div>
@@ -200,7 +239,7 @@ const CadastroCliente: React.FC = () => {
         <div className="card card-elevated">
           <div className="stats-content">
             <h3>PENDENTES</h3>
-            <p className="stats-number">{clientes.filter(c => c.status === 'pendente').length}</p>
+            <p className="stats-number">{stats.pendentes}</p>
             <span className="stats-change warning">Aguardando aprovação</span>
           </div>
         </div>
@@ -208,7 +247,7 @@ const CadastroCliente: React.FC = () => {
         <div className="card card-elevated">
           <div className="stats-content">
             <h3>INATIVOS</h3>
-            <p className="stats-number">{clientes.filter(c => c.status === 'inativo').length}</p>
+            <p className="stats-number">{stats.inativos}</p>
             <span className="stats-change negative">Clientes inativos</span>
           </div>
         </div>
@@ -253,7 +292,18 @@ const CadastroCliente: React.FC = () => {
           </button>
         </div>
         <div className="clientes-list">
-          {clientesFiltrados.length === 0 ? (
+          {loading ? (
+            <div className="loading-state">
+              <p>Carregando clientes...</p>
+            </div>
+          ) : error ? (
+            <div className="error-state">
+              <p>{error}</p>
+              <button onClick={carregarClientes} className="btn btn-primary">
+                Tentar Novamente
+              </button>
+            </div>
+          ) : clientesFiltrados.length === 0 ? (
             <div className="no-results">
               <p>Nenhum cliente encontrado com os filtros aplicados.</p>
             </div>
@@ -282,11 +332,11 @@ const CadastroCliente: React.FC = () => {
                     </div>
                     <div className="detail-group">
                       <span className="detail-label">Cadastrado em:</span>
-                      <span className="detail-value">{cliente.dataCadastro}</span>
+                      <span className="detail-value">{new Date(cliente.dataCadastro).toLocaleDateString('pt-BR')}</span>
                     </div>
                     <div className="detail-group">
                       <span className="detail-label">Última atualização:</span>
-                      <span className="detail-value">{cliente.ultimaAtualizacao}</span>
+                      <span className="detail-value">{new Date(cliente.ultimaAtualizacao).toLocaleDateString('pt-BR')}</span>
                     </div>
                   </div>
                 </div>
