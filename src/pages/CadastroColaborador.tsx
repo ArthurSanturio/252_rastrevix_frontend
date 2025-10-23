@@ -10,6 +10,19 @@ import { colaboradorService } from "../services/colaboradorService"
 import "../styles/colaboradores.css"
 import "../styles/dashboard-pages.css"
 
+// Função auxiliar para formatar salário para exibição
+const formatSalarioDisplay = (value: number | undefined): string => {
+  if (value === undefined || value === null) {
+    return 'Não informado';
+  }
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+};
+
 // Interfaces locais para evitar problemas de importação
 interface Colaborador {
   id: string;
@@ -33,6 +46,17 @@ interface Colaborador {
   supervisorId?: string;
   dataCadastro: string;
   ultimaAtualizacao: string;
+}
+
+interface ColaboradorFormData {
+  nome: string;
+  email: string;
+  telefone: string;
+  cargo: string;
+  departamento: 'tecnologia' | 'gestao' | 'analise' | 'design' | 'comercial' | 'administrativo' | 'rh' | 'financeiro' | 'operacoes' | 'marketing';
+  salario: string;
+  status: 'ativo' | 'inativo' | 'treinamento';
+  dataContratacao: string;
 }
 
 interface ColaboradorCreateData {
@@ -161,15 +185,39 @@ const CadastroColaborador: React.FC = () => {
     }
   }
 
-  const handleSaveColaborador = async (novoColaborador: ColaboradorCreateData) => {
+  const handleSaveColaborador = async (novoColaborador: ColaboradorFormData) => {
     try {
-      await colaboradorService.criarColaborador(novoColaborador)
+      // Converter dados do formulário para o formato esperado pela API
+      const dadosParaEnvio: ColaboradorCreateData = {
+        nome: novoColaborador.nome,
+        email: novoColaborador.email,
+        telefone: novoColaborador.telefone,
+        cargo: novoColaborador.cargo,
+        departamento: novoColaborador.departamento,
+        status: novoColaborador.status || 'treinamento',
+        salario: novoColaborador.salario ? Number(novoColaborador.salario.toString().replace(/[^\d,.-]/g, '').replace(',', '.')) : undefined,
+        dataContratacao: novoColaborador.dataContratacao,
+        dataDemissao: novoColaborador.dataDemissao,
+        endereco: novoColaborador.endereco,
+        cidade: novoColaborador.cidade,
+        estado: novoColaborador.estado,
+        cep: novoColaborador.cep,
+        cpf: novoColaborador.cpf,
+        rg: novoColaborador.rg,
+        dataNascimento: novoColaborador.dataNascimento,
+        observacoes: novoColaborador.observacoes,
+        supervisorId: novoColaborador.supervisorId
+      }
+
+      console.log('Dados sendo enviados para criação:', dadosParaEnvio)
+
+      await colaboradorService.criarColaborador(dadosParaEnvio)
 
       // Recarregar lista de colaboradores e estatísticas
       await carregarColaboradores()
       await carregarEstatisticas()
 
-    alert(`Colaborador ${novoColaborador.nome} cadastrado com sucesso!`)
+      alert(`Colaborador ${novoColaborador.nome} cadastrado com sucesso!`)
       setIsModalOpen(false)
     } catch (err) {
       console.error('Erro ao salvar colaborador:', err)
@@ -220,7 +268,7 @@ const CadastroColaborador: React.FC = () => {
       await carregarColaboradores()
       await carregarEstatisticas()
 
-    alert(`Colaborador ${colaboradorAtualizado.nome} atualizado com sucesso!`)
+      alert(`Colaborador ${colaboradorAtualizado.nome} atualizado com sucesso!`)
       setIsEditarModalOpen(false)
     } catch (err) {
       console.error('Erro ao atualizar colaborador:', err)
@@ -354,7 +402,7 @@ const CadastroColaborador: React.FC = () => {
                     <div className="detail-group">
                       <span className="detail-label">Salário:</span>
                       <span className="detail-value">
-                        {colaborador.salario ? `R$ ${colaborador.salario.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}` : 'Não informado'}
+                        {formatSalarioDisplay(colaborador.salario)}
                       </span>
                     </div>
                     <div className="detail-group">

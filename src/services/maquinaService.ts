@@ -1,68 +1,150 @@
-import type { Maquina, MaquinaFilters, MaquinaResponse } from '../types';
+import { apiService } from './api';
 
-// Updated: 2025-01-20 - Force Vite reload
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+export interface Maquina {
+    id: string;
+    codigo: string;
+    nome: string;
+    tipo: 'torno' | 'fresa' | 'soldadora' | 'prensa' | 'cnc' | 'outras';
+    status: 'ativa' | 'inativa' | 'manutencao' | 'calibracao';
+    fabricante?: string;
+    modelo?: string;
+    numeroSerie?: string;
+    dataFabricacao?: string;
+    dataInstalacao?: string;
+    valorCompra?: number;
+    eficiencia?: number;
+    localizacao?: string;
+    responsavel?: string;
+    especificacoes?: string;
+    observacoes?: string;
+    proximaManutencao?: string;
+    ultimaManutencao?: string;
+    horasTrabalhadas?: number;
+    horasManutencao?: number;
+    dataCadastro: string;
+    ultimaAtualizacao: string;
+}
+
+export interface MaquinaCreateData {
+    codigo: string;
+    nome: string;
+    tipo: 'torno' | 'fresa' | 'soldadora' | 'prensa' | 'cnc' | 'outras';
+    status?: 'ativa' | 'inativa' | 'manutencao' | 'calibracao';
+    fabricante?: string;
+    modelo?: string;
+    numeroSerie?: string;
+    dataFabricacao?: string;
+    dataInstalacao?: string;
+    valorCompra?: number;
+    eficiencia?: number;
+    localizacao?: string;
+    responsavel?: string;
+    especificacoes?: string;
+    observacoes?: string;
+    proximaManutencao?: string;
+    ultimaManutencao?: string;
+    horasTrabalhadas?: number;
+    horasManutencao?: number;
+}
+
+export interface MaquinaUpdateData extends Partial<MaquinaCreateData> {
+    id: string;
+}
+
+export interface MaquinaListResponse {
+    message: string;
+    data: {
+        maquinas: Maquina[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+        };
+    };
+}
+
+export interface MaquinaStatsResponse {
+    message: string;
+    data: {
+        total: number;
+        ativas: number;
+        inativas: number;
+        manutencao: number;
+        calibracao: number;
+        eficienciaMedia: number;
+        porTipo: Array<{
+            tipo: string;
+            count: string;
+        }>;
+    };
+}
+
+export interface MaquinaResponse {
+    message: string;
+    data: {
+        maquina: Maquina;
+    };
+}
 
 class MaquinaService {
-    private baseURL: string;
+    private baseEndpoint = '/maquinas';
 
-    constructor(baseURL: string = API_BASE_URL) {
-        this.baseURL = baseURL;
+    // Listar máquinas com filtros e paginação
+    async listarMaquinas(params?: {
+        page?: number;
+        limit?: number;
+        search?: string;
+        status?: string;
+        tipo?: string;
+    }): Promise<MaquinaListResponse> {
+        const queryParams = new URLSearchParams();
+
+        if (params?.page) queryParams.append('page', params.page.toString());
+        if (params?.limit) queryParams.append('limit', params.limit.toString());
+        if (params?.search) queryParams.append('search', params.search);
+        if (params?.status) queryParams.append('status', params.status);
+        if (params?.tipo) queryParams.append('tipo', params.tipo);
+
+        const endpoint = queryParams.toString()
+            ? `${this.baseEndpoint}?${queryParams.toString()}`
+            : this.baseEndpoint;
+
+        return apiService.request<MaquinaListResponse>(endpoint);
     }
 
-    private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-        const url = `${this.baseURL}${endpoint}`;
-        const token = localStorage.getItem('accessToken');
-
-        const config: RequestInit = {
-            ...options,
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token && { Authorization: `Bearer ${token}` }),
-                ...options.headers,
-            },
-        };
-
-        try {
-            const response = await fetch(url, config);
-
-            if (!response.ok) {
-                let errorData: any;
-                try {
-                    errorData = await response.json();
-                } catch {
-                    errorData = {
-                        error: `HTTP ${response.status}: ${response.statusText}`,
-                        code: response.status.toString()
-                    };
-                }
-                throw new Error(errorData.error || `Erro na requisição: ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            if (error instanceof Error) {
-                throw error;
-            }
-            throw new Error('Erro de conexão com o servidor');
-        }
+    // Obter estatísticas das máquinas
+    async obterEstatisticas(): Promise<MaquinaStatsResponse> {
+        return apiService.request<MaquinaStatsResponse>(`${this.baseEndpoint}/stats`);
     }
 
-    async getMaquinas(filters: MaquinaFilters = {}): Promise<MaquinaResponse> {
-        const params = new URLSearchParams();
-
-        if (filters.search) params.append('search', filters.search);
-        if (filters.status) params.append('status', filters.status);
-        if (filters.tipo) params.append('tipo', filters.tipo);
-
-        const queryString = params.toString();
-        const endpoint = `/maquinas${queryString ? `?${queryString}` : ''}`;
-
-        return this.request<MaquinaResponse>(endpoint);
+    // Obter máquina por ID
+    async obterMaquina(id: string): Promise<MaquinaResponse> {
+        return apiService.request<MaquinaResponse>(`${this.baseEndpoint}/${id}`);
     }
 
-    async getMaquinaById(id: string): Promise<{ message: string; data: { maquina: Maquina } }> {
-        return this.request<{ message: string; data: { maquina: Maquina } }>(`/maquinas/${id}`);
+    // Criar nova máquina
+    async criarMaquina(dados: MaquinaCreateData): Promise<MaquinaResponse> {
+        return apiService.request<MaquinaResponse>(this.baseEndpoint, {
+            method: 'POST',
+            body: JSON.stringify(dados),
+        });
+    }
+
+    // Atualizar máquina
+    async atualizarMaquina(dados: MaquinaUpdateData): Promise<MaquinaResponse> {
+        const { id, ...updateData } = dados;
+        return apiService.request<MaquinaResponse>(`${this.baseEndpoint}/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(updateData),
+        });
+    }
+
+    // Deletar máquina
+    async deletarMaquina(id: string): Promise<{ message: string }> {
+        return apiService.request<{ message: string }>(`${this.baseEndpoint}/${id}`, {
+            method: 'DELETE',
+        });
     }
 }
 

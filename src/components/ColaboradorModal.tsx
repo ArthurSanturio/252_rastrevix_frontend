@@ -1,13 +1,38 @@
 import React, { useState } from 'react'
 
+// Função auxiliar para formatar salário para exibição
+const formatSalarioForDisplay = (value: string | number | undefined): string => {
+    if (value === undefined || value === null || value === '') {
+        return '';
+    }
+    // Converter para número se for string
+    const num = typeof value === 'string' ? parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.')) : value;
+    if (isNaN(num)) {
+        return '';
+    }
+    return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    }).format(num);
+};
+
+// Função auxiliar para converter entrada formatada de volta para número
+const parseSalarioFromInput = (inputString: string): string => {
+    // Remover "R$", espaços, pontos (separador de milhares) e substituir vírgula (separador decimal) por ponto
+    return inputString.replace(/[R$\s.]/g, '').replace(',', '.');
+};
+
 interface ColaboradorFormData {
     nome: string
     email: string
     telefone: string
     cargo: string
-    departamento: string
+    departamento: 'tecnologia' | 'gestao' | 'analise' | 'design' | 'comercial' | 'administrativo' | 'rh' | 'financeiro' | 'operacoes' | 'marketing'
     salario: string
     status: 'ativo' | 'inativo' | 'treinamento'
+    dataContratacao: string
 }
 
 interface ColaboradorModalProps {
@@ -22,19 +47,30 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
         email: '',
         telefone: '',
         cargo: '',
-        departamento: '',
+        departamento: 'tecnologia',
         salario: '',
-        status: 'treinamento'
+        status: 'treinamento',
+        dataContratacao: ''
     })
 
     const [errors, setErrors] = useState<Partial<ColaboradorFormData>>({})
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }))
+
+        if (name === 'salario') {
+            // Converter entrada formatada de volta para número limpo
+            const parsedValue = parseSalarioFromInput(value);
+            setFormData(prev => ({
+                ...prev,
+                [name]: parsedValue
+            }));
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }));
+        }
 
         // Limpar erro quando o usuário começar a digitar
         if (errors[name as keyof ColaboradorFormData]) {
@@ -60,6 +96,8 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
 
         if (!formData.telefone.trim()) {
             newErrors.telefone = 'Telefone é obrigatório'
+        } else if (!/^\(\d{2}\)\s\d{4,5}-\d{4}$/.test(formData.telefone)) {
+            newErrors.telefone = 'Telefone deve estar no formato (XX) XXXXX-XXXX ou (XX) XXXX-XXXX'
         }
 
         if (!formData.cargo.trim()) {
@@ -72,6 +110,12 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
 
         if (!formData.salario.trim()) {
             newErrors.salario = 'Salário é obrigatório'
+        } else if (isNaN(Number(formData.salario))) {
+            newErrors.salario = 'Salário deve ser um número válido'
+        }
+
+        if (!formData.dataContratacao.trim()) {
+            newErrors.dataContratacao = 'Data de contratação é obrigatória'
         }
 
         setErrors(newErrors)
@@ -88,9 +132,10 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
                 email: '',
                 telefone: '',
                 cargo: '',
-                departamento: '',
+                departamento: 'tecnologia',
                 salario: '',
-                status: 'treinamento'
+                status: 'treinamento',
+                dataContratacao: ''
             })
             setErrors({})
             onClose()
@@ -103,9 +148,10 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
             email: '',
             telefone: '',
             cargo: '',
-            departamento: '',
+            departamento: 'tecnologia',
             salario: '',
-            status: 'treinamento'
+            status: 'treinamento',
+            dataContratacao: ''
         })
         setErrors({})
         onClose()
@@ -182,15 +228,24 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
 
                     <div className="form-group">
                         <label htmlFor="departamento">Departamento *</label>
-                        <input
-                            type="text"
+                        <select
                             id="departamento"
                             name="departamento"
                             value={formData.departamento}
                             onChange={handleInputChange}
                             className={errors.departamento ? 'error' : ''}
-                            placeholder="Digite o departamento"
-                        />
+                        >
+                            <option value="tecnologia">Tecnologia</option>
+                            <option value="gestao">Gestão</option>
+                            <option value="analise">Análise</option>
+                            <option value="design">Design</option>
+                            <option value="comercial">Comercial</option>
+                            <option value="administrativo">Administrativo</option>
+                            <option value="rh">RH</option>
+                            <option value="financeiro">Financeiro</option>
+                            <option value="operacoes">Operações</option>
+                            <option value="marketing">Marketing</option>
+                        </select>
                         {errors.departamento && <span className="error-message">{errors.departamento}</span>}
                     </div>
 
@@ -200,12 +255,25 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
                             type="text"
                             id="salario"
                             name="salario"
-                            value={formData.salario}
+                            value={formatSalarioForDisplay(formData.salario)}
                             onChange={handleInputChange}
                             className={errors.salario ? 'error' : ''}
                             placeholder="R$ 0.000,00"
                         />
                         {errors.salario && <span className="error-message">{errors.salario}</span>}
+                    </div>
+
+                    <div className="form-group">
+                        <label htmlFor="dataContratacao">Data de Contratação *</label>
+                        <input
+                            type="date"
+                            id="dataContratacao"
+                            name="dataContratacao"
+                            value={formData.dataContratacao}
+                            onChange={handleInputChange}
+                            className={errors.dataContratacao ? 'error' : ''}
+                        />
+                        {errors.dataContratacao && <span className="error-message">{errors.dataContratacao}</span>}
                     </div>
 
                     <div className="form-group">
