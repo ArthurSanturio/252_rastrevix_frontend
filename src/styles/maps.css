@@ -274,6 +274,36 @@
   color: var(--text-muted);
 }
 
+/* Custom Marker Styles */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-marker div {
+  transition: all 0.2s ease;
+}
+
+.custom-marker:hover div {
+  transform: scale(1.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
+/* Leaflet Popup Customization */
+.leaflet-popup-content-wrapper {
+  border-radius: var(--radius-lg) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-tip {
+  background: var(--surface) !important;
+}
+
 /* Responsividade do modal */
 @media (max-width: 768px) {
   .modal-overlay {

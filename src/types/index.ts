@@ -16,6 +16,8 @@ export type Maquina = {
     localizacao?: string;
     responsavel?: string;
     eficiencia?: number;
+    latitude?: number;
+    longitude?: number;
     dataCadastro: string;
     ultimaAtualizacao: string;
 };
