@@ -21,6 +21,8 @@ export interface Maquina {
     ultimaManutencao?: string;
     horasTrabalhadas?: number;
     horasManutencao?: number;
+    latitude?: number;
+    longitude?: number;
     dataCadastro: string;
     ultimaAtualizacao: string;
 }
@@ -45,6 +47,8 @@ export interface MaquinaCreateData {
     ultimaManutencao?: string;
     horasTrabalhadas?: number;
     horasManutencao?: number;
+    latitude?: number;
+    longitude?: number;
 }
 
 export interface MaquinaUpdateData extends Partial<MaquinaCreateData> {

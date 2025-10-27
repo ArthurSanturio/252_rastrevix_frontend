@@ -42,6 +42,8 @@ interface MaquinaFormData {
     ultimaManutencao: string
     horasTrabalhadas: string
     horasManutencao: string
+    latitude: string
+    longitude: string
 }
 
 interface MaquinaModalProps {
@@ -70,7 +72,9 @@ const MaquinaModal: React.FC<MaquinaModalProps> = ({ isOpen, onClose, onSave }) 
         proximaManutencao: '',
         ultimaManutencao: '',
         horasTrabalhadas: '',
-        horasManutencao: ''
+        horasManutencao: '',
+        latitude: '',
+        longitude: ''
     })
 
     const [errors, setErrors] = useState<Partial<MaquinaFormData>>({})
@@ -423,6 +427,50 @@ const MaquinaModal: React.FC<MaquinaModalProps> = ({ isOpen, onClose, onSave }) 
                                 value={formData.proximaManutencao}
                                 onChange={handleInputChange}
                             />
+                        </div>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label htmlFor="latitude">
+                                Latitude (GPS)
+                                <span style={{ fontSize: '12px', color: '#666', marginLeft: '5px' }}>
+                                    (Ex: -23.5505)
+                                </span>
+                            </label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="latitude"
+                                name="latitude"
+                                value={formData.latitude}
+                                onChange={handleInputChange}
+                                placeholder="-23.5505"
+                            />
+                            <small style={{ display: 'block', color: '#666', fontSize: '12px', marginTop: '4px' }}>
+                                Coordenadas reais aparecerão no mapa. Deixe vazio para gerar automaticamente.
+                            </small>
+                        </div>
+
+                        <div className="form-group">
+                            <label htmlFor="longitude">
+                                Longitude (GPS)
+                                <span style={{ fontSize: '12px', color: '#666', marginLeft: '5px' }}>
+                                    (Ex: -46.6333)
+                                </span>
+                            </label>
+                            <input
+                                type="number"
+                                step="any"
+                                id="longitude"
+                                name="longitude"
+                                value={formData.longitude}
+                                onChange={handleInputChange}
+                                placeholder="-46.6333"
+                            />
+                            <small style={{ display: 'block', color: '#666', fontSize: '12px', marginTop: '4px' }}>
+                                Use Google Maps para obter as coordenadas exatas.
+                            </small>
                         </div>
                     </div>
 

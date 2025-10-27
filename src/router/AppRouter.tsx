@@ -1,5 +1,8 @@
 import type React from "react"
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { ToastContainer } from 'react-toastify'
+import 'react-toastify/dist/ReactToastify.css'
+import '../styles/toast-custom.css'
 import Login from "../pages/Login"
 import Register from "../pages/Register"
 import Dashboard from "../pages/Dashboard"
@@ -45,6 +48,21 @@ const AppRouter: React.FC = () => {
           {/* Catch all route - redirect to login for unauthenticated users */}
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+
+        {/* Toast Container - notificações globais */}
+        <ToastContainer
+          position="top-right"
+          autoClose={3000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="colored"
+          style={{ zIndex: 9999 }}
+        />
       </Router>
     </AuthProvider>
   )

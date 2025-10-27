@@ -123,6 +123,8 @@ const Maps: React.FC = () => {
           iconAnchor: [10, 10]
         })
 
+        const isRealLocation = maquina.latitude && maquina.longitude
+
         const marker = L.marker([lat, lng], { icon: customIcon })
           .addTo(mapInstanceRef.current!)
           .bindPopup(`
@@ -137,6 +139,10 @@ const Maps: React.FC = () => {
               ${maquina.fabricante ? `<p style="margin: 4px 0;"><strong>Fabricante:</strong> ${maquina.fabricante}</p>` : ''}
               ${maquina.responsavel ? `<p style="margin: 4px 0;"><strong>Responsável:</strong> ${maquina.responsavel}</p>` : ''}
               ${maquina.eficiencia ? `<p style="margin: 4px 0;"><strong>Eficiência:</strong> ${maquina.eficiencia}%</p>` : ''}
+              <p style="margin: 4px 0; padding: 4px; background: ${isRealLocation ? '#d4edda' : '#fff3cd'}; border-radius: 3px; font-size: 11px;">
+                <strong>📍 Coordenadas:</strong> ${isRealLocation ? '✅ REAIS' : '⚠️ GERADAS AUTOMATICAMENTE'}
+                <br/>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}
+              </p>
             </div>
           `)
 
@@ -203,6 +209,13 @@ const Maps: React.FC = () => {
               <span className="label">Zoom:</span>
               <span className="value">13x</span>
             </div>
+          </div>
+          <div style={{ margin: '10px 0', padding: '8px', background: '#fff3cd', borderRadius: '4px', fontSize: '11px', color: '#856404' }}>
+            <strong>ℹ️ Como obter coordenadas reais:</strong>
+            <br />1. Abra o formulário de cadastro
+            <br />2. Use o Google Maps para obter Lat/Lng
+            <br />3. Digite nas coordenadas ou deixe gerar
+            <br />4. Marcadores REAIS aparecem em verde
           </div>
           <div className="panel-actions">
             <button

@@ -6,7 +6,9 @@ import { useAuth } from "../contexts/AuthContext"
 import ColaboradorModal from "../components/ColaboradorModal"
 import ColaboradorDetalhesModal from "../components/ColaboradorDetalhesModal"
 import ColaboradorEditarModal from "../components/ColaboradorEditarModal"
+import ConfirmModal from "../components/ConfirmModal"
 import { colaboradorService } from "../services/colaboradorService"
+import { showSuccess, showError, showWarning } from "../utils/toast"
 import "../styles/colaboradores.css"
 import "../styles/dashboard-pages.css"
 
@@ -88,7 +90,9 @@ const CadastroColaborador: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false)
   const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [colaboradorSelecionado, setColaboradorSelecionado] = useState<Colaborador | null>(null)
+  const [colaboradorParaExcluir, setColaboradorParaExcluir] = useState<Colaborador | null>(null)
 
   // Estados para dados reais
   const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
@@ -217,11 +221,11 @@ const CadastroColaborador: React.FC = () => {
       await carregarColaboradores()
       await carregarEstatisticas()
 
-      alert(`Colaborador ${novoColaborador.nome} cadastrado com sucesso!`)
+      showSuccess(`Colaborador ${novoColaborador.nome} cadastrado com sucesso!`)
       setIsModalOpen(false)
     } catch (err) {
       console.error('Erro ao salvar colaborador:', err)
-      alert('Erro ao cadastrar colaborador. Tente novamente.')
+      showError('Erro ao cadastrar colaborador. Tente novamente.')
     }
   }
 
@@ -268,11 +272,40 @@ const CadastroColaborador: React.FC = () => {
       await carregarColaboradores()
       await carregarEstatisticas()
 
-      alert(`Colaborador ${colaboradorAtualizado.nome} atualizado com sucesso!`)
+      showSuccess(`Colaborador ${colaboradorAtualizado.nome} atualizado com sucesso!`)
       setIsEditarModalOpen(false)
     } catch (err) {
       console.error('Erro ao atualizar colaborador:', err)
-      alert('Erro ao atualizar colaborador. Tente novamente.')
+      showError('Erro ao atualizar colaborador. Tente novamente.')
+    }
+  }
+
+  const handleExcluirColaborador = (colaborador: Colaborador) => {
+    setColaboradorParaExcluir(colaborador)
+    setIsConfirmModalOpen(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!colaboradorParaExcluir) return
+
+    try {
+      await colaboradorService.deletarColaborador(colaboradorParaExcluir.id)
+
+      // Recarregar lista de colaboradores e estatísticas
+      await carregarColaboradores()
+      await carregarEstatisticas()
+
+      showSuccess(`Colaborador ${colaboradorParaExcluir.nome} excluído com sucesso!`)
+      setColaboradorParaExcluir(null)
+    } catch (err) {
+      console.error('Erro ao excluir colaborador:', err)
+      if (err instanceof Error && err.message.includes('não encontrado')) {
+        showWarning('Este colaborador já foi excluído ou não existe mais. A lista será atualizada.')
+        await carregarColaboradores()
+      } else {
+        showError('Erro ao excluir colaborador. Tente novamente.')
+      }
+      setColaboradorParaExcluir(null)
     }
   }
 
@@ -428,6 +461,13 @@ const CadastroColaborador: React.FC = () => {
                   >
                     Ver Detalhes
                   </button>
+                  <button
+                    className="btn btn-danger"
+                    onClick={() => handleExcluirColaborador(colaborador)}
+                    style={{ background: '#ff4757', color: '#fff' }}
+                  >
+                    Excluir
+                  </button>
                 </div>
               </div>
             ))
@@ -453,6 +493,20 @@ const CadastroColaborador: React.FC = () => {
         onClose={() => setIsEditarModalOpen(false)}
         colaborador={colaboradorSelecionado}
         onSave={handleSalvarEdicao}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => {
+          setIsConfirmModalOpen(false)
+          setColaboradorParaExcluir(null)
+        }}
+        onConfirm={confirmarExclusao}
+        title="Confirmar Exclusão"
+        message={`Tem certeza que deseja excluir o colaborador "${colaboradorParaExcluir?.nome}"? Esta ação não pode ser desfeita.`}
+        confirmText="Confirmar Exclusão"
+        cancelText="Cancelar"
+        type="danger"
       />
     </div>
   )

@@ -5,7 +5,9 @@ import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import MaquinaModal from "../components/MaquinaModal"
 import MaquinaEditarModal from "../components/MaquinaEditarModal"
+import ConfirmModal from "../components/ConfirmModal"
 import { maquinaService } from "../services/maquinaService"
+import { showSuccess, showError, showWarning } from "../utils/toast"
 import "../styles/dashboard-pages.css"
 
 // Função auxiliar para formatar valor para exibição
@@ -75,6 +77,8 @@ interface MaquinaFormData {
   ultimaManutencao: string;
   horasTrabalhadas: string;
   horasManutencao: string;
+  latitude: string;
+  longitude: string;
 }
 
 interface MaquinaCreateData {
@@ -109,7 +113,9 @@ const CadastroMaquina: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [maquinaSelecionada, setMaquinaSelecionada] = useState<Maquina | null>(null)
+  const [maquinaParaExcluir, setMaquinaParaExcluir] = useState<Maquina | null>(null)
   const [stats, setStats] = useState({
     total: 0,
     ativas: 0,
@@ -176,7 +182,9 @@ const CadastroMaquina: React.FC = () => {
         proximaManutencao: novaMaquina.proximaManutencao || undefined,
         ultimaManutencao: novaMaquina.ultimaManutencao || undefined,
         horasTrabalhadas: novaMaquina.horasTrabalhadas ? Number(novaMaquina.horasTrabalhadas) : undefined,
-        horasManutencao: novaMaquina.horasManutencao ? Number(novaMaquina.horasManutencao) : undefined
+        horasManutencao: novaMaquina.horasManutencao ? Number(novaMaquina.horasManutencao) : undefined,
+        latitude: novaMaquina.latitude ? Number(novaMaquina.latitude) : undefined,
+        longitude: novaMaquina.longitude ? Number(novaMaquina.longitude) : undefined
       }
 
       console.log('Dados sendo enviados para criação:', dadosParaEnvio)
@@ -187,11 +195,11 @@ const CadastroMaquina: React.FC = () => {
       await carregarMaquinas()
       await carregarEstatisticas()
 
-      alert(`Máquina ${novaMaquina.nome} cadastrada com sucesso!`)
+      showSuccess(`Máquina ${novaMaquina.nome} cadastrada com sucesso!`)
       setIsModalOpen(false)
     } catch (err) {
       console.error('Erro ao salvar máquina:', err)
-      alert('Erro ao cadastrar máquina. Tente novamente.')
+      showError('Erro ao cadastrar máquina. Tente novamente.')
     }
   }
 
@@ -234,33 +242,40 @@ const CadastroMaquina: React.FC = () => {
       await carregarMaquinas()
       await carregarEstatisticas()
 
-      alert(`Máquina ${maquinaAtualizada.nome} atualizada com sucesso!`)
+      showSuccess(`Máquina ${maquinaAtualizada.nome} atualizada com sucesso!`)
       setIsEditarModalOpen(false)
     } catch (err) {
       console.error('Erro ao atualizar máquina:', err)
-      alert('Erro ao atualizar máquina. Tente novamente.')
+      showError('Erro ao atualizar máquina. Tente novamente.')
     }
   }
 
-  const handleExcluirMaquina = async (maquina: Maquina) => {
-    if (window.confirm(`Tem certeza que deseja excluir a máquina "${maquina.nome}"?`)) {
-      try {
-        await maquinaService.deletarMaquina(maquina.id)
+  const handleExcluirMaquina = (maquina: Maquina) => {
+    setMaquinaParaExcluir(maquina)
+    setIsConfirmModalOpen(true)
+  }
 
-        // Recarregar lista de máquinas e estatísticas
+  const confirmarExclusao = async () => {
+    if (!maquinaParaExcluir) return
+
+    try {
+      await maquinaService.deletarMaquina(maquinaParaExcluir.id)
+
+      // Recarregar lista de máquinas e estatísticas
+      await carregarMaquinas()
+      await carregarEstatisticas()
+
+      showSuccess(`Máquina ${maquinaParaExcluir.nome} excluída com sucesso!`)
+      setMaquinaParaExcluir(null)
+    } catch (err) {
+      console.error('Erro ao excluir máquina:', err)
+      if (err instanceof Error && err.message.includes('não encontrada')) {
+        showWarning('Esta máquina já foi excluída ou não existe mais. A lista será atualizada.')
         await carregarMaquinas()
-        await carregarEstatisticas()
-
-        alert(`Máquina ${maquina.nome} excluída com sucesso!`)
-      } catch (err) {
-        console.error('Erro ao excluir máquina:', err)
-        if (err instanceof Error && err.message.includes('não encontrada')) {
-          alert('Esta máquina já foi excluída ou não existe mais. A lista será atualizada.')
-          await carregarMaquinas()
-        } else {
-          alert('Erro ao excluir máquina. Tente novamente.')
-        }
+      } else {
+        showError('Erro ao excluir máquina. Tente novamente.')
       }
+      setMaquinaParaExcluir(null)
     }
   }
 
@@ -480,6 +495,20 @@ const CadastroMaquina: React.FC = () => {
         onClose={() => setIsEditarModalOpen(false)}
         onSave={handleSalvarEdicao}
         maquina={maquinaSelecionada}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => {
+          setIsConfirmModalOpen(false)
+          setMaquinaParaExcluir(null)
+        }}
+        onConfirm={confirmarExclusao}
+        title="Confirmar Exclusão"
+        message={`Tem certeza que deseja excluir a máquina "${maquinaParaExcluir?.nome}"? Esta ação não pode ser desfeita.`}
+        confirmText="Confirmar Exclusão"
+        cancelText="Cancelar"
+        type="danger"
       />
     </div>
   )

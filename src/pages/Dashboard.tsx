@@ -1,12 +1,130 @@
 "use client"
 
 import type React from "react"
+import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
+import { maquinaService } from "../services/maquinaService"
+import { clienteService } from "../services/clienteService"
+import { colaboradorService } from "../services/colaboradorService"
 import "../styles/dashboard-pages.css"
+
+interface DashboardStats {
+  totalMaquinas: number
+  maquinasAtivas: number
+  totalClientes: number
+  clientesAtivos: number
+  totalColaboradores: number
+  colaboradoresAtivos: number
+  eficienciaMedia: number
+  loading: boolean
+}
 
 const Dashboard: React.FC = () => {
   const { user } = useAuth()
   const userName = user?.name || "Usuário"
+
+  const [stats, setStats] = useState<DashboardStats>({
+    totalMaquinas: 0,
+    maquinasAtivas: 0,
+    totalClientes: 0,
+    clientesAtivos: 0,
+    totalColaboradores: 0,
+    colaboradoresAtivos: 0,
+    eficienciaMedia: 0,
+    loading: true
+  })
+
+  useEffect(() => {
+    carregarEstatisticas()
+  }, [])
+
+  const carregarEstatisticas = async () => {
+    try {
+      setStats(prev => ({ ...prev, loading: true }))
+
+      // Carregar estatísticas de máquinas
+      const maquinasStats = await maquinaService.obterEstatisticas()
+
+      // Carregar estatísticas de clientes
+      const clientesStats = await clienteService.obterEstatisticas()
+
+      // Carregar estatísticas de colaboradores
+      const colaboradoresStats = await colaboradorService.obterEstatisticas()
+
+      setStats({
+        totalMaquinas: maquinasStats.data.total,
+        maquinasAtivas: maquinasStats.data.ativas,
+        totalClientes: clientesStats.data.total,
+        clientesAtivos: clientesStats.data.ativos,
+        totalColaboradores: colaboradoresStats.data.total,
+        colaboradoresAtivos: colaboradoresStats.data.ativos,
+        eficienciaMedia: maquinasStats.data.eficienciaMedia,
+        loading: false
+      })
+    } catch (err) {
+      console.error('Erro ao carregar estatísticas:', err)
+      setStats(prev => ({ ...prev, loading: false }))
+    }
+  }
+
+  const getMensalData = () => {
+    // Calcular baseado nos dados reais
+    const totalItens = stats.totalMaquinas + stats.totalClientes + stats.totalColaboradores
+    const itensAtivos = stats.maquinasAtivas + stats.clientesAtivos + stats.colaboradoresAtivos
+
+    // Meta: manter 80% dos itens ativos
+    const meta = 80
+    const porcentagemAtual = totalItens > 0 ? (itensAtivos / totalItens) * 100 : 0
+
+    return {
+      porcentagem: Math.min(100, Math.round(porcentagemAtual)),
+      meta,
+      diffSemana: totalItens > 0 ? Math.round(porcentagemAtual - meta) : 0
+    }
+  }
+
+  const getHorasSemanais = () => {
+    // Estimar baseado nas horas trabalhadas das máquinas ativas
+    // Média de 8 horas por máquina ativa
+    const horasEstimadas = stats.maquinasAtivas * 8 * 7 // 7 dias da semana
+    return {
+      total: horasEstimadas || 0,
+      diff: Math.round(horasEstimadas * 0.08) // ~8% de variação
+    }
+  }
+
+  const getTarefasSemanais = () => {
+    // Média de 4 tarefas por máquina ativa
+    const tarefas = stats.maquinasAtivas * 4
+    return {
+      total: tarefas || 0,
+      diff: Math.round(tarefas * 0.15) // ~15% de progresso
+    }
+  }
+
+  const mensalData = getMensalData()
+  const horasData = getHorasSemanais()
+  const tarefasData = getTarefasSemanais()
+
+  if (stats.loading) {
+    return (
+      <div className="dashboard-content">
+        <div className="dashboard-welcome">
+          <h2>Bem-vindo de volta, {userName}!</h2>
+          <p>Carregando informações...</p>
+        </div>
+        <div className="dashboard-grid">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="card card-elevated" style={{ minHeight: '120px' }}>
+              <div className="stats-content">
+                <h3 style={{ opacity: 0.3 }}>Carregando...</h3>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="dashboard-content">
@@ -18,73 +136,107 @@ const Dashboard: React.FC = () => {
       <div className="dashboard-grid">
         <div className="card card-elevated">
           <div className="stats-content">
-            <h3>TOTAL DE PROJETOS</h3>
-            <p className="stats-number">12</p>
-            <span className="stats-change positive">+2 este mês</span>
+            <h3>TOTAL DE RECURSOS</h3>
+            <p className="stats-number">{stats.totalMaquinas + stats.totalClientes + stats.totalColaboradores}</p>
+            <span className="stats-change positive">
+              {stats.totalMaquinas} máquinas, {stats.totalClientes} clientes, {stats.totalColaboradores} colaboradores
+            </span>
           </div>
         </div>
 
         <div className="card card-elevated">
           <div className="stats-content">
-            <h3>TAREFAS CONCLUÍDAS</h3>
-            <p className="stats-number">48</p>
-            <span className="stats-change positive">+8 esta semana</span>
+            <h3>ATIVOS NO SISTEMA</h3>
+            <p className="stats-number">
+              {stats.maquinasAtivas + stats.clientesAtivos + stats.colaboradoresAtivos}
+            </p>
+            <span className="stats-change positive">
+              {stats.maquinasAtivas} máq., {stats.clientesAtivos} client., {stats.colaboradoresAtivos} colabor.
+            </span>
           </div>
         </div>
 
         <div className="card card-elevated">
           <div className="stats-content">
-            <h3>HORAS TRABALHADAS</h3>
-            <p className="stats-number">156</p>
-            <span className="stats-change positive">+12 esta semana</span>
+            <h3>EFICIÊNCIA MÉDIA</h3>
+            <p className="stats-number">
+              {stats.eficienciaMedia > 0 ? `${Math.round(stats.eficienciaMedia)}%` : 'N/A'}
+            </p>
+            <span className="stats-change positive">
+              Máquinas {stats.eficienciaMedia > 0 ? 'operacionais' : 'sem dados'}
+            </span>
           </div>
         </div>
 
         <div className="card card-elevated">
           <div className="stats-content">
-            <h3>META MENSAL</h3>
-            <p className="stats-number">85%</p>
-            <span className="stats-change positive">+5% esta semana</span>
+            <h3>PERFORMANCE</h3>
+            <p className="stats-number">{mensalData.porcentagem}%</p>
+            <span className="stats-change positive">
+              {mensalData.diffSemana >= 0 ? '+' : ''}{mensalData.diffSemana}% desta semana
+            </span>
           </div>
         </div>
       </div>
 
       <div className="dashboard-bottom-sections">
         <div className="card card-elevated">
-          <h2>Atividades Recentes</h2>
+          <h2>Resumo Atual</h2>
           <div className="activity-list">
             <div className="activity-item">
               <div className="activity-content">
-                <p>Nova tarefa criada: "Implementar sidebar"</p>
-                <span className="activity-time">Há 2 horas</span>
+                <p><strong>Máquinas:</strong> {stats.totalMaquinas} total ({stats.maquinasAtivas} ativas)</p>
+                <span className="activity-time">Última atualização: hoje</span>
               </div>
             </div>
             <div className="activity-item">
               <div className="activity-content">
-                <p>Tarefa concluída: "Configurar roteamento"</p>
-                <span className="activity-time">Há 4 horas</span>
+                <p><strong>Clientes:</strong> {stats.totalClientes} total ({stats.clientesAtivos} ativos)</p>
+                <span className="activity-time">Última atualização: hoje</span>
               </div>
             </div>
+            <div className="activity-item">
+              <div className="activity-content">
+                <p><strong>Colaboradores:</strong> {stats.totalColaboradores} total ({stats.colaboradoresAtivos} ativos)</p>
+                <span className="activity-time">Última atualização: hoje</span>
+              </div>
+            </div>
+            {stats.eficienciaMedia > 0 && (
+              <div className="activity-item">
+                <div className="activity-content">
+                  <p><strong>Eficiência média das máquinas:</strong> {Math.round(stats.eficienciaMedia)}%</p>
+                  <span className="activity-time">Baseado em dados reais</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         <div className="card card-elevated">
-          <h2>Projetos em Andamento</h2>
+          <h2>Status do Sistema</h2>
           <div className="project-list">
             <div className="project-item">
               <div className="project-header">
-                <h3>Rastrevix Dashboard</h3>
-                <span className="project-status in-progress">EM PROGRESSO</span>
+                <h3>Rastrevix - Rastreamento Industrial</h3>
+                <span className="project-status in-progress">OPERACIONAL</span>
               </div>
               <div className="project-progress">
                 <div className="progress-bar">
-                  <div className="progress-fill" style={{ width: "75%" }}></div>
+                  <div
+                    className="progress-fill"
+                    style={{ width: `${stats.totalMaquinas > 0 ? Math.min(100, (stats.maquinasAtivas / stats.totalMaquinas) * 100) : 0}%` }}
+                  ></div>
                 </div>
-                <span className="progress-text">75% concluído</span>
+                <span className="progress-text">
+                  {stats.totalMaquinas > 0
+                    ? `${Math.round((stats.maquinasAtivas / stats.totalMaquinas) * 100)}% das máquinas ativas`
+                    : 'Sem máquinas cadastradas'
+                  }
+                </span>
               </div>
               <div className="project-meta">
-                <span>3 tarefas restantes</span>
-                <span>Prazo: 15/01/2024</span>
+                <span>{stats.maquinasAtivas} máquinas em operação</span>
+                <span>{stats.clientesAtivos} clientes ativos</span>
               </div>
             </div>
           </div>
@@ -95,3 +247,4 @@ const Dashboard: React.FC = () => {
 }
 
 export default Dashboard
+

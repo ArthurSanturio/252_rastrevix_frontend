@@ -6,7 +6,9 @@ import { useAuth } from "../contexts/AuthContext"
 import ClienteModal from "../components/ClienteModal"
 import ClienteDetalhesModal from "../components/ClienteDetalhesModal"
 import ClienteEditarModal from "../components/ClienteEditarModal"
+import ConfirmModal from "../components/ConfirmModal"
 import { clienteService } from "../services/clienteService"
+import { showSuccess, showError, showWarning } from "../utils/toast"
 import "../styles/dashboard-pages.css"
 
 // Interfaces locais para evitar problemas de importação
@@ -53,7 +55,9 @@ const CadastroCliente: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false)
   const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
+  const [clienteParaExcluir, setClienteParaExcluir] = useState<Cliente | null>(null)
 
   // Estados para dados reais
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -157,11 +161,11 @@ const CadastroCliente: React.FC = () => {
       await carregarClientes()
       await carregarEstatisticas()
 
-      alert(`Cliente ${novoCliente.nome} cadastrado com sucesso!`)
+      showSuccess(`Cliente ${novoCliente.nome} cadastrado com sucesso!`)
       setIsModalOpen(false)
     } catch (err) {
       console.error('Erro ao salvar cliente:', err)
-      alert('Erro ao cadastrar cliente. Tente novamente.')
+      showError('Erro ao cadastrar cliente. Tente novamente.')
     }
   }
 
@@ -203,11 +207,40 @@ const CadastroCliente: React.FC = () => {
       await carregarClientes()
       await carregarEstatisticas()
 
-      alert(`Cliente ${clienteAtualizado.nome} atualizado com sucesso!`)
+      showSuccess(`Cliente ${clienteAtualizado.nome} atualizado com sucesso!`)
       setIsEditarModalOpen(false)
     } catch (err) {
       console.error('Erro ao atualizar cliente:', err)
-      alert('Erro ao atualizar cliente. Tente novamente.')
+      showError('Erro ao atualizar cliente. Tente novamente.')
+    }
+  }
+
+  const handleExcluirCliente = (cliente: Cliente) => {
+    setClienteParaExcluir(cliente)
+    setIsConfirmModalOpen(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!clienteParaExcluir) return
+
+    try {
+      await clienteService.deletarCliente(clienteParaExcluir.id)
+
+      // Recarregar lista de clientes e estatísticas
+      await carregarClientes()
+      await carregarEstatisticas()
+
+      showSuccess(`Cliente ${clienteParaExcluir.nome} excluído com sucesso!`)
+      setClienteParaExcluir(null)
+    } catch (err) {
+      console.error('Erro ao excluir cliente:', err)
+      if (err instanceof Error && err.message.includes('não encontrado')) {
+        showWarning('Este cliente já foi excluído ou não existe mais. A lista será atualizada.')
+        await carregarClientes()
+      } else {
+        showError('Erro ao excluir cliente. Tente novamente.')
+      }
+      setClienteParaExcluir(null)
     }
   }
 
@@ -348,6 +381,13 @@ const CadastroCliente: React.FC = () => {
                     Editar
                   </button>
                   <button
+                    className="btn btn-danger"
+                    onClick={() => handleExcluirCliente(cliente)}
+                    style={{ background: '#ff4757', color: '#fff' }}
+                  >
+                    Excluir
+                  </button>
+                  <button
                     className="btn btn-secondary"
                     onClick={() => handleVerDetalhes(cliente)}
                   >
@@ -378,6 +418,20 @@ const CadastroCliente: React.FC = () => {
         onClose={() => setIsEditarModalOpen(false)}
         cliente={clienteSelecionado}
         onSave={handleSalvarEdicao}
+      />
+
+      <ConfirmModal
+        isOpen={isConfirmModalOpen}
+        onClose={() => {
+          setIsConfirmModalOpen(false)
+          setClienteParaExcluir(null)
+        }}
+        onConfirm={confirmarExclusao}
+        title="Confirmar Exclusão"
+        message={`Tem certeza que deseja excluir o cliente "${clienteParaExcluir?.nome}"? Esta ação não pode ser desfeita.`}
+        confirmText="Confirmar Exclusão"
+        cancelText="Cancelar"
+        type="danger"
       />
     </div>
   )
