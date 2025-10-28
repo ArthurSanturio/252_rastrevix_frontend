@@ -1,16 +1,27 @@
 import React from 'react'
 
 interface Colaborador {
-    id: number
+    id: string
     nome: string
     email: string
     telefone: string
     cargo: string
-    departamento: string
+    departamento: 'tecnologia' | 'gestao' | 'analise' | 'design' | 'comercial' | 'administrativo' | 'rh' | 'financeiro' | 'operacoes' | 'marketing'
     status: 'ativo' | 'inativo' | 'treinamento'
+    salario?: number
     dataContratacao: string
+    dataDemissao?: string
+    endereco?: string
+    cidade?: string
+    estado?: string
+    cep?: string
+    cpf?: string
+    rg?: string
+    dataNascimento?: string
+    observacoes?: string
+    supervisorId?: string
+    dataCadastro: string
     ultimaAtualizacao: string
-    salario: string
 }
 
 interface ColaboradorDetalhesModalProps {

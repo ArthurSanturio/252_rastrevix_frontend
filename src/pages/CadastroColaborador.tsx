@@ -59,6 +59,16 @@ interface ColaboradorFormData {
   salario: string;
   status: 'ativo' | 'inativo' | 'treinamento';
   dataContratacao: string;
+  dataDemissao?: string;
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  cpf?: string;
+  rg?: string;
+  dataNascimento?: string;
+  observacoes?: string;
+  supervisorId?: string;
 }
 
 interface ColaboradorCreateData {

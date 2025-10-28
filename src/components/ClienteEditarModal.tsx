@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 
 interface Cliente {
-    id: number
+    id: string
     nome: string
     email: string
     telefone: string

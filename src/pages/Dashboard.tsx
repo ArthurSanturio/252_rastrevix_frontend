@@ -83,28 +83,7 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  const getHorasSemanais = () => {
-    // Estimar baseado nas horas trabalhadas das máquinas ativas
-    // Média de 8 horas por máquina ativa
-    const horasEstimadas = stats.maquinasAtivas * 8 * 7 // 7 dias da semana
-    return {
-      total: horasEstimadas || 0,
-      diff: Math.round(horasEstimadas * 0.08) // ~8% de variação
-    }
-  }
-
-  const getTarefasSemanais = () => {
-    // Média de 4 tarefas por máquina ativa
-    const tarefas = stats.maquinasAtivas * 4
-    return {
-      total: tarefas || 0,
-      diff: Math.round(tarefas * 0.15) // ~15% de progresso
-    }
-  }
-
   const mensalData = getMensalData()
-  const horasData = getHorasSemanais()
-  const tarefasData = getTarefasSemanais()
 
   if (stats.loading) {
     return (

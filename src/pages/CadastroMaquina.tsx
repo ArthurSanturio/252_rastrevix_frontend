@@ -53,6 +53,8 @@ interface Maquina {
   ultimaManutencao?: string;
   horasTrabalhadas?: number;
   horasManutencao?: number;
+  latitude?: number;
+  longitude?: number;
   dataCadastro: string;
   ultimaAtualizacao: string;
 }
@@ -101,6 +103,8 @@ interface MaquinaCreateData {
   ultimaManutencao?: string;
   horasTrabalhadas?: number;
   horasManutencao?: number;
+  latitude?: number;
+  longitude?: number;
 }
 
 const CadastroMaquina: React.FC = () => {

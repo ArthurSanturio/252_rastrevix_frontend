@@ -159,7 +159,9 @@ const MaquinaModal: React.FC<MaquinaModalProps> = ({ isOpen, onClose, onSave }) 
                 proximaManutencao: '',
                 ultimaManutencao: '',
                 horasTrabalhadas: '',
-                horasManutencao: ''
+                horasManutencao: '',
+                latitude: '',
+                longitude: ''
             })
             setErrors({})
             onClose()
@@ -186,7 +188,9 @@ const MaquinaModal: React.FC<MaquinaModalProps> = ({ isOpen, onClose, onSave }) 
             proximaManutencao: '',
             ultimaManutencao: '',
             horasTrabalhadas: '',
-            horasManutencao: ''
+            horasManutencao: '',
+            latitude: '',
+            longitude: ''
         })
         setErrors({})
         onClose()

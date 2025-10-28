@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react'
 
 interface Colaborador {
-    id: number
+    id: string
     nome: string
     email: string
     telefone: string
     cargo: string
-    departamento: string
+    departamento: 'tecnologia' | 'gestao' | 'analise' | 'design' | 'comercial' | 'administrativo' | 'rh' | 'financeiro' | 'operacoes' | 'marketing'
     status: 'ativo' | 'inativo' | 'treinamento'
+    salario?: number
     dataContratacao: string
+    dataDemissao?: string
+    endereco?: string
+    cidade?: string
+    estado?: string
+    cep?: string
+    cpf?: string
+    rg?: string
+    dataNascimento?: string
+    observacoes?: string
+    supervisorId?: string
+    dataCadastro: string
     ultimaAtualizacao: string
-    salario: string
 }
 
 interface ColaboradorEditarModalProps {
@@ -20,9 +31,18 @@ interface ColaboradorEditarModalProps {
     onSave: (colaboradorAtualizado: Colaborador) => void
 }
 
+interface ColaboradorErrors {
+    nome?: string
+    email?: string
+    telefone?: string
+    cargo?: string
+    departamento?: string
+    salario?: string
+}
+
 const ColaboradorEditarModal: React.FC<ColaboradorEditarModalProps> = ({ isOpen, onClose, colaborador, onSave }) => {
     const [formData, setFormData] = useState<Partial<Colaborador>>({})
-    const [errors, setErrors] = useState<Partial<Colaborador>>({})
+    const [errors, setErrors] = useState<ColaboradorErrors>({})
 
     useEffect(() => {
         if (colaborador) {
@@ -40,13 +60,21 @@ const ColaboradorEditarModal: React.FC<ColaboradorEditarModalProps> = ({ isOpen,
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
+
+        // Convert salario string to number if it's a salario input
+        let processedValue: any = value
+        if (name === 'salario') {
+            const parsed = parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.'))
+            processedValue = isNaN(parsed) ? value : parsed
+        }
+
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: processedValue
         }))
 
         // Limpar erro quando o usuário começar a digitar
-        if (errors[name as keyof Colaborador]) {
+        if (name in errors) {
             setErrors(prev => ({
                 ...prev,
                 [name]: undefined
@@ -55,7 +83,7 @@ const ColaboradorEditarModal: React.FC<ColaboradorEditarModalProps> = ({ isOpen,
     }
 
     const validateForm = (): boolean => {
-        const newErrors: Partial<Colaborador> = {}
+        const newErrors: ColaboradorErrors = {}
 
         if (!formData.nome?.trim()) {
             newErrors.nome = 'Nome é obrigatório'
@@ -63,7 +91,7 @@ const ColaboradorEditarModal: React.FC<ColaboradorEditarModalProps> = ({ isOpen,
 
         if (!formData.email?.trim()) {
             newErrors.email = 'Email é obrigatório'
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+        } else if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
             newErrors.email = 'Email inválido'
         }
 
@@ -75,11 +103,11 @@ const ColaboradorEditarModal: React.FC<ColaboradorEditarModalProps> = ({ isOpen,
             newErrors.cargo = 'Cargo é obrigatório'
         }
 
-        if (!formData.departamento?.trim()) {
+        if (!formData.departamento) {
             newErrors.departamento = 'Departamento é obrigatório'
         }
 
-        if (!formData.salario?.trim()) {
+        if (formData.salario === undefined || formData.salario === null) {
             newErrors.salario = 'Salário é obrigatório'
         }
 

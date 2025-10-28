@@ -53,7 +53,7 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
         dataContratacao: ''
     })
 
-    const [errors, setErrors] = useState<Partial<ColaboradorFormData>>({})
+    const [errors, setErrors] = useState<Partial<Record<keyof ColaboradorFormData, string>>>({})
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
@@ -82,7 +82,7 @@ const ColaboradorModal: React.FC<ColaboradorModalProps> = ({ isOpen, onClose, on
     }
 
     const validateForm = (): boolean => {
-        const newErrors: Partial<ColaboradorFormData> = {}
+        const newErrors: Partial<Record<keyof ColaboradorFormData, string>> = {}
 
         if (!formData.nome.trim()) {
             newErrors.nome = 'Nome é obrigatório'

@@ -62,7 +62,7 @@ class ApiService {
     log('API Service initialized', { baseURL });
   }
 
-  private async request<T>(
+  async request<T>(
     endpoint: string,
     options: RequestInit = {},
     retryCount: number = 0
