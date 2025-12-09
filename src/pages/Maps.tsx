@@ -5,9 +5,8 @@ import { useEffect, useRef, useState } from "react"
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
 import "../styles/maps.css"
-import FilterModal from "../components/FilterModal"
-import { maquinaService } from "../services/maquinaService"
-import type { Maquina, MaquinaFilters } from "../types"
+import { rastreadorService } from "../services/rastreadorService"
+import type { RastreadorComPosicao } from "../types"
 
 // Fix para ícones padrão do Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl
@@ -21,54 +20,80 @@ const Maps: React.FC = () => {
   const mapRef = useRef<HTMLDivElement>(null)
   const mapInstanceRef = useRef<L.Map | null>(null)
   const markersRef = useRef<L.Marker[]>([])
+  const tileLayerRef = useRef<L.TileLayer | null>(null)
 
-  const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
-  const [maquinas, setMaquinas] = useState<Maquina[]>([])
-  const [filters, setFilters] = useState<MaquinaFilters>({})
+  const [rastreadores, setRastreadores] = useState<RastreadorComPosicao[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [mapType, setMapType] = useState<'mapa' | 'satelite'>('mapa')
+  const [selectedRastreador, setSelectedRastreador] = useState<string | null>(null)
 
-  // Função para carregar máquinas
-  const loadMaquinas = async (filters: MaquinaFilters = {}) => {
+  // Função para carregar rastreadores com posições
+  const loadRastreadores = async () => {
     try {
       setLoading(true)
       setError(null)
-      const response = await maquinaService.listarMaquinas(filters)
-      setMaquinas(response.data.maquinas)
+      const rastreadoresComPosicoes = await rastreadorService.listarRastreadoresComPosicoes()
+      setRastreadores(rastreadoresComPosicoes)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar máquinas')
-      console.error('Erro ao carregar máquinas:', err)
+      setError(err instanceof Error ? err.message : 'Erro ao carregar rastreadores')
+      console.error('Erro ao carregar rastreadores:', err)
     } finally {
       setLoading(false)
     }
   }
 
-  // Função para gerar coordenadas consistentes baseadas no ID da máquina
-  const generateConsistentCoordinates = (maquinaId: string) => {
-    // Usar o ID da máquina para gerar coordenadas consistentes
-    let hash = 0
-    for (let i = 0; i < maquinaId.length; i++) {
-      const char = maquinaId.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32bit integer
+  // Função para formatar data/hora
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return 'N/A'
+    try {
+      const date = new Date(dateString)
+      const day = String(date.getDate()).padStart(2, '0')
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const year = date.getFullYear()
+      const hours = String(date.getHours()).padStart(2, '0')
+      const minutes = String(date.getMinutes()).padStart(2, '0')
+      const seconds = String(date.getSeconds()).padStart(2, '0')
+      return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`
+    } catch {
+      return 'N/A'
     }
+  }
 
-    // Normalizar o hash para valores entre 0 e 1
-    const normalizedHash = Math.abs(hash) / 2147483647
+  // Função para obter ícone SVG do tipo de veículo
+  const getVehicleIcon = (tipo?: string, isSelected: boolean = false) => {
+    const size = isSelected ? 32 : 24
+    const color = '#22c55e' // Verde
 
-    // Gerar coordenadas baseadas no hash (área de São Paulo)
-    const baseLat = -23.5505
-    const baseLng = -46.6333
-    const range = 0.05 // Raio de ~5km
-
-    const lat = baseLat + (normalizedHash - 0.5) * range
-    const lng = baseLng + ((normalizedHash * 7) % 1 - 0.5) * range // Usar múltiplo para longitude
-
-    return { lat, lng }
+    if (tipo === 'onibus') {
+      return L.divIcon({
+        className: 'vehicle-marker',
+        html: `
+          <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 6H20C21.1 6 22 6.9 22 8V19H20C20 20.1 19.1 21 18 21C16.9 21 16 20.1 16 19H8C8 20.1 7.1 21 6 21C4.9 21 4 20.1 4 19H2V8C2 6.9 2.9 6 4 6ZM4 8V17H20V8H4ZM6 19.5C6.83 19.5 7.5 18.83 7.5 18C7.5 17.17 6.83 16.5 6 16.5C5.17 16.5 4.5 17.17 4.5 18C4.5 18.83 5.17 19.5 6 19.5ZM18 19.5C18.83 19.5 19.5 18.83 19.5 18C19.5 17.17 18.83 16.5 18 16.5C17.17 16.5 16.5 17.17 16.5 18C16.5 18.83 17.17 19.5 18 19.5Z" fill="${color}"/>
+            <rect x="6" y="10" width="12" height="4" fill="white"/>
+          </svg>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
+      })
+    } else {
+      // Carro/caminhão
+      return L.divIcon({
+        className: 'vehicle-marker',
+        html: `
+          <svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5H6.5C5.84 5 5.28 5.42 5.08 6.01L3 12V20C3 20.55 3.45 21 4 21H5C5.55 21 6 20.55 6 20V19H18V20C18 20.55 18.45 21 19 21H20C20.55 21 21 20.55 21 20V12L18.92 6.01ZM6.5 6.5H17.5L19.11 11H4.89L6.5 6.5ZM7 13.5C7.83 13.5 8.5 14.17 8.5 15C8.5 15.83 7.83 16.5 7 16.5C6.17 16.5 5.5 15.83 5.5 15C5.5 14.17 6.17 13.5 7 13.5ZM17 13.5C17.83 13.5 18.5 14.17 18.5 15C18.5 15.83 17.83 16.5 17 16.5C16.17 16.5 15.5 15.83 15.5 15C15.5 14.17 16.17 13.5 17 13.5Z" fill="${color}"/>
+          </svg>
+        `,
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2]
+      })
+    }
   }
 
   // Função para atualizar marcadores no mapa
-  const updateMapMarkers = (maquinas: Maquina[]) => {
+  const updateMapMarkers = (rastreadores: RastreadorComPosicao[]) => {
     if (!mapInstanceRef.current) return
 
     // Limpar marcadores existentes
@@ -78,92 +103,86 @@ const Maps: React.FC = () => {
     markersRef.current = []
 
     // Adicionar novos marcadores
-    maquinas.forEach(maquina => {
-      if (maquina.localizacao) {
-        // Usar coordenadas reais se disponíveis, senão gerar consistentes
-        let lat, lng
-        if (maquina.latitude && maquina.longitude) {
-          lat = maquina.latitude
-          lng = maquina.longitude
-        } else {
-          const coords = generateConsistentCoordinates(maquina.id)
-          lat = coords.lat
-          lng = coords.lng
-        }
+    rastreadores.forEach(rastreador => {
+      const posicao = rastreador.posicaoAtual
+      if (posicao?.latitude && posicao?.longitude) {
+        const isSelected = selectedRastreador === rastreador.id
+        const velocidade = posicao.velocidade || 0
+        const placa = rastreador.placa || `PLACA-${rastreador.numeroSerial.slice(-6).toUpperCase()}` || 'N/A'
+        const tipoVeiculo = rastreador.tipoVeiculo ||
+          (rastreador.modelo?.toLowerCase().includes('onibus') ? 'onibus' : 'carro')
 
-        // Definir cor do marcador baseado no status
-        const getMarkerColor = (status: string) => {
-          switch (status) {
-            case 'ativa': return '#28a745' // Verde
-            case 'inativa': return '#6c757d' // Cinza
-            case 'manutencao': return '#ffc107' // Amarelo
-            case 'calibracao': return '#17a2b8' // Azul
-            default: return '#007bff' // Azul padrão
-          }
-        }
+        const icon = getVehicleIcon(tipoVeiculo, isSelected)
 
-        // Criar ícone customizado com cor baseada no status
-        const customIcon = L.divIcon({
-          className: 'custom-marker',
-          html: `<div style="
-            background-color: ${getMarkerColor(maquina.status)};
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 12px;
-            font-weight: bold;
-          ">${maquina.codigo.charAt(maquina.codigo.length - 1)}</div>`,
-          iconSize: [20, 20],
-          iconAnchor: [10, 10]
-        })
-
-        const isRealLocation = maquina.latitude && maquina.longitude
-
-        const marker = L.marker([lat, lng], { icon: customIcon })
+        const marker = L.marker([posicao.latitude, posicao.longitude], { icon })
           .addTo(mapInstanceRef.current!)
           .bindPopup(`
-            <div style="min-width: 200px;">
-              <h4 style="margin: 0 0 8px 0; color: #333;">${maquina.nome}</h4>
-              <p style="margin: 4px 0;"><strong>Código:</strong> ${maquina.codigo}</p>
-              <p style="margin: 4px 0;"><strong>Tipo:</strong> ${maquina.tipo}</p>
-              <p style="margin: 4px 0;"><strong>Status:</strong> 
-                <span style="color: ${getMarkerColor(maquina.status)}; font-weight: bold;">${maquina.status}</span>
-              </p>
-              <p style="margin: 4px 0;"><strong>Localização:</strong> ${maquina.localizacao}</p>
-              ${maquina.fabricante ? `<p style="margin: 4px 0;"><strong>Fabricante:</strong> ${maquina.fabricante}</p>` : ''}
-              ${maquina.responsavel ? `<p style="margin: 4px 0;"><strong>Responsável:</strong> ${maquina.responsavel}</p>` : ''}
-              ${maquina.eficiencia ? `<p style="margin: 4px 0;"><strong>Eficiência:</strong> ${maquina.eficiencia}%</p>` : ''}
-              <p style="margin: 4px 0; padding: 4px; background: ${isRealLocation ? '#d4edda' : '#fff3cd'}; border-radius: 3px; font-size: 11px;">
-                <strong>📍 Coordenadas:</strong> ${isRealLocation ? '✅ REAIS' : '⚠️ GERADAS AUTOMATICAMENTE'}
-                <br/>Lat: ${lat.toFixed(6)}, Lng: ${lng.toFixed(6)}
-              </p>
+            <div style="min-width: 150px; text-align: center;">
+              <p style="margin: 4px 0; font-weight: bold; font-size: 14px;">PLACA</p>
+              <p style="margin: 4px 0; font-size: 12px; color: #666;">${placa}</p>
+              <p style="margin: 8px 0 4px 0; font-weight: bold; font-size: 14px;">${Math.round(velocidade)} km/h</p>
             </div>
           `)
+
+        // Adicionar evento de clique
+        marker.on('click', () => {
+          setSelectedRastreador(rastreador.id)
+          // Scroll para o cartão do veículo
+          const cardElement = document.getElementById(`rastreador-${rastreador.id}`)
+          if (cardElement) {
+            cardElement.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+          }
+        })
 
         markersRef.current.push(marker)
       }
     })
   }
 
-  // Função para aplicar filtros
-  const handleApplyFilters = (newFilters: MaquinaFilters) => {
-    setFilters(newFilters)
-    loadMaquinas(newFilters)
+  // Função para alternar tipo de mapa
+  const toggleMapType = (newType: 'mapa' | 'satelite') => {
+    if (!mapInstanceRef.current || mapType === newType) return
+
+    // Remover camada atual
+    if (tileLayerRef.current) {
+      mapInstanceRef.current.removeLayer(tileLayerRef.current)
+    }
+
+    // Adicionar nova camada
+    if (newType === 'satelite') {
+      // Mudar para satélite
+      tileLayerRef.current = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: '© Esri',
+        maxZoom: 19,
+      })
+    } else {
+      // Mudar para mapa
+      tileLayerRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 19,
+      })
+    }
+
+    tileLayerRef.current.addTo(mapInstanceRef.current)
+    setMapType(newType)
+  }
+
+  // Função para centralizar no rastreador
+  const centerOnRastreador = (rastreador: RastreadorComPosicao) => {
+    if (!mapInstanceRef.current || !rastreador.posicaoAtual) return
+
+    const posicao = rastreador.posicaoAtual
+    mapInstanceRef.current.setView([posicao.latitude!, posicao.longitude!], 15)
+    setSelectedRastreador(rastreador.id)
   }
 
   useEffect(() => {
     if (mapRef.current && !mapInstanceRef.current) {
-      // Inicializar o mapa
-      const map = L.map(mapRef.current).setView([-23.5505, -46.6333], 13) // São Paulo como centro
+      // Inicializar o mapa centralizado no Brasil
+      const map = L.map(mapRef.current).setView([-14.2350, -51.9253], 5)
 
-      // Adicionar camada de tiles do OpenStreetMap
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      // Adicionar camada de tiles padrão (OpenStreetMap)
+      tileLayerRef.current = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19,
       }).addTo(map)
@@ -171,72 +190,124 @@ const Maps: React.FC = () => {
       // Salvar referência do mapa
       mapInstanceRef.current = map
 
-      // Carregar máquinas iniciais
-      loadMaquinas()
-    }
+      // Carregar rastreadores iniciais
+      loadRastreadores()
 
-    // Cleanup function
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove()
-        mapInstanceRef.current = null
+      // Atualizar rastreadores a cada 30 segundos
+      const interval = setInterval(loadRastreadores, 30000)
+
+      return () => {
+        clearInterval(interval)
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove()
+          mapInstanceRef.current = null
+        }
       }
     }
   }, [])
 
-  // Atualizar marcadores quando as máquinas mudarem
+  // Atualizar marcadores quando os rastreadores mudarem
   useEffect(() => {
-    updateMapMarkers(maquinas)
-  }, [maquinas])
+    updateMapMarkers(rastreadores)
+  }, [rastreadores, selectedRastreador])
 
   return (
     <div className="maps-container">
-      <div ref={mapRef} className="map">
-        <div className="map-overlay-panel">
-          <div className="panel-header">
-            <h3>Informações do Mapa</h3>
-          </div>
-          <div className="panel-content">
-            <div className="info-item">
-              <span className="label">Localização:</span>
-              <span className="value">São Paulo, SP</span>
-            </div>
-            <div className="info-item">
-              <span className="label">Marcadores:</span>
-              <span className="value">{maquinas.length} pontos</span>
-            </div>
-            <div className="info-item">
-              <span className="label">Zoom:</span>
-              <span className="value">13x</span>
-            </div>
-          </div>
-          <div style={{ margin: '10px 0', padding: '8px', background: '#fff3cd', borderRadius: '4px', fontSize: '11px', color: '#856404' }}>
-            <strong>ℹ️ Como obter coordenadas reais:</strong>
-            <br />1. Abra o formulário de cadastro
-            <br />2. Use o Google Maps para obter Lat/Lng
-            <br />3. Digite nas coordenadas ou deixe gerar
-            <br />4. Marcadores REAIS aparecem em verde
-          </div>
-          <div className="panel-actions">
-            <button
-              className="btn btn-primary"
-              onClick={() => setIsFilterModalOpen(true)}
-              disabled={loading}
-            >
-              {loading ? 'Carregando...' : 'Filtrar'}
-            </button>
-            <button className="btn btn-secondary">Exportar</button>
-          </div>
+      {/* Cartões de veículos no topo */}
+      <div className="vehicles-cards-container">
+        <div className="vehicles-cards-scroll">
+          {loading && rastreadores.length === 0 ? (
+            <div className="loading-cards">Carregando veículos...</div>
+          ) : rastreadores.length === 0 ? (
+            <div className="no-vehicles">Nenhum veículo encontrado</div>
+          ) : (
+            rastreadores.map((rastreador) => {
+              const posicao = rastreador.posicaoAtual
+              const velocidade = posicao?.velocidade || 0
+              // Usar número serial como placa se não houver placa específica
+              const placa = rastreador.placa || `PLACA-${rastreador.numeroSerial.slice(-6).toUpperCase()}` || 'N/A'
+              // Usar modelo ou número serial como nome
+              const nome = rastreador.nome || rastreador.modelo || rastreador.numeroSerial
+              const condutor = rastreador.condutor || 'N/A'
+              const isSelected = selectedRastreador === rastreador.id
+              // Determinar tipo de veículo baseado no modelo ou usar padrão
+              const tipoVeiculo = rastreador.tipoVeiculo ||
+                (rastreador.modelo?.toLowerCase().includes('onibus') ? 'onibus' : 'carro')
+              const tensaoBateria = posicao?.tensaoBateria
+              const ignicao = posicao?.ignicao
+
+              return (
+                <div
+                  key={rastreador.id}
+                  id={`rastreador-${rastreador.id}`}
+                  className={`vehicle-card ${isSelected ? 'selected' : ''}`}
+                  onClick={() => centerOnRastreador(rastreador)}
+                >
+                  <div className="vehicle-card-icon">
+                    {tipoVeiculo === 'onibus' ? '🚌' : '🚛'}
+                  </div>
+                  <div className="vehicle-card-content">
+                    <div className="vehicle-card-header">
+                      <span className="vehicle-name">{nome}</span>
+                      <span className="vehicle-placa">{placa}</span>
+                    </div>
+                    <div className="vehicle-card-info">
+                      <div className="vehicle-info-item">
+                        <span className="vehicle-label">Condutor:</span>
+                        <span className="vehicle-value">{condutor}</span>
+                      </div>
+                      <div className="vehicle-info-item">
+                        <span className="vehicle-label">Atualização:</span>
+                        <span className="vehicle-value">{formatDateTime(posicao?.timestamp)}</span>
+                      </div>
+                    </div>
+                    <div className="vehicle-card-footer">
+                      <div className="vehicle-stat">
+                        <span className="vehicle-stat-value">{Math.round(velocidade)}Km/h</span>
+                      </div>
+                      <div className="vehicle-stat">
+                        <span className="vehicle-stat-icon">🔑</span>
+                        <span className="vehicle-stat-value">{ignicao ? 'Ligada' : 'Desligada'}</span>
+                      </div>
+                      <div className="vehicle-stat">
+                        <span className="vehicle-stat-icon">⚡</span>
+                        <span className="vehicle-stat-value">
+                          {tensaoBateria ? `${tensaoBateria.toFixed(1)}V` : 'N/A'}
+                          {tensaoBateria && tensaoBateria < 12 && (
+                            <span className="battery-warning">⚠️</span>
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })
+          )}
         </div>
       </div>
 
-      {/* Modal de Filtro */}
-      <FilterModal
-        isOpen={isFilterModalOpen}
-        onClose={() => setIsFilterModalOpen(false)}
-        onApplyFilters={handleApplyFilters}
-        currentFilters={filters}
-      />
+      {/* Mapa */}
+      <div ref={mapRef} className="map">
+        {/* Controles do mapa */}
+        <div className="map-controls">
+          <button
+            className={`map-control-btn ${mapType === 'mapa' ? 'active' : ''}`}
+            onClick={() => toggleMapType('mapa')}
+          >
+            Mapa
+          </button>
+          <button
+            className={`map-control-btn ${mapType === 'satelite' ? 'active' : ''}`}
+            onClick={() => toggleMapType('satelite')}
+          >
+            Satélite
+          </button>
+          <button className="map-control-btn search-btn" title="Pesquisar">
+            🔍
+          </button>
+        </div>
+      </div>
 
       {/* Mensagem de erro */}
       {error && (

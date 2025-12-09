@@ -3,13 +3,290 @@
 .maps-container {
   display: flex;
   flex-direction: column;
-  height: 93vh;
+  height: 100vh;
   background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
   overflow: hidden;
 }
 
+/* Container de cartões de veículos */
+.vehicles-cards-container {
+  flex-shrink: 0;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-height: 180px;
+}
+
+.vehicles-cards-scroll {
+  display: flex;
+  gap: 1rem;
+  padding: 0 1rem;
+  min-width: max-content;
+}
+
+/* Cartão de veículo */
+.vehicle-card {
+  min-width: 320px;
+  max-width: 320px;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  display: flex;
+  gap: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.vehicle-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+.vehicle-card.selected {
+  border-color: var(--primary);
+  background: var(--surface-elevated);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.vehicle-card-icon {
+  font-size: 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.vehicle-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.vehicle-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.vehicle-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vehicle-placa {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.vehicle-card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.vehicle-info-item {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.vehicle-label {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.vehicle-value {
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vehicle-card-footer {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin-top: auto;
+}
+
+.vehicle-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+}
+
+.vehicle-stat-icon {
+  font-size: 1rem;
+}
+
+.vehicle-stat-value {
+  color: var(--text-primary);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.battery-warning {
+  color: #ef4444;
+  font-size: 0.9rem;
+}
+
+.loading-cards,
+.no-vehicles {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+/* Mapa */
+.map {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Controles do mapa */
+.map-controls {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1000;
+  display: flex;
+  gap: 0.5rem;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  padding: 0.25rem;
+}
+
+.map-control-btn {
+  padding: 0.5rem 1rem;
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--text-primary);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 80px;
+}
+
+.map-control-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--primary);
+}
+
+.map-control-btn.active {
+  background: var(--primary);
+  color: white;
+  border-color: var(--primary);
+}
+
+.search-btn {
+  min-width: 40px;
+  padding: 0.5rem;
+  font-size: 1.2rem;
+}
+
+/* Estilos para marcadores de veículos */
+.vehicle-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.vehicle-marker svg {
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* Customização dos popups do Leaflet */
+.leaflet-popup-content-wrapper {
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 12px !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-tip {
+  background: white !important;
+}
+
+/* Scrollbar personalizada para os cartões */
+.vehicles-cards-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.vehicles-cards-container::-webkit-scrollbar-track {
+  background: var(--surface);
+  border-radius: 4px;
+}
+
+.vehicles-cards-container::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+.vehicles-cards-container::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+  .vehicle-card {
+    min-width: 280px;
+    max-width: 280px;
+  }
+
+  .vehicle-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .vehicle-card-footer {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .map-controls {
+    flex-direction: column;
+    top: 10px;
+    right: 10px;
+  }
+
+  .map-control-btn {
+    min-width: 60px;
+    font-size: 0.75rem;
+    padding: 0.4rem 0.8rem;
+  }
+}
+
+/* Estilos antigos mantidos para compatibilidade */
 .maps-header {
   margin-bottom: 1.5rem;
   flex-shrink: 0;
@@ -26,17 +303,6 @@
   color: var(--text-muted);
   margin: 0;
   font-size: 1.1rem;
-}
-
-.map {
-  flex: 1;
-  height: 100%;
-  border-radius: var(--radius);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  border: 1px solid var(--border);
-  min-height: 400px;
-  position: relative;
 }
 
 .map-overlay-panel {
@@ -141,6 +407,21 @@
   border-color: var(--border-hover);
 }
 
+/* Custom Marker Styles */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.custom-marker div {
+  transition: all 0.2s ease;
+}
+
+.custom-marker:hover div {
+  transform: scale(1.2);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+}
+
 /* Responsividade para telas menores */
 @media (max-width: 768px) {
   .map-overlay-panel {
@@ -160,171 +441,6 @@
   }
   
   .btn {
-    width: 100%;
-  }
-}
-
-/* Modal Styles */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 2000;
-  padding: 1rem;
-}
-
-.modal-content {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-  max-width: 500px;
-  width: 100%;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface-elevated);
-}
-
-.modal-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  font-size: 1.5rem;
-  color: var(--text-muted);
-  cursor: pointer;
-  padding: 0.25rem;
-  border-radius: var(--radius);
-  transition: all 0.2s ease;
-}
-
-.modal-close:hover {
-  background: var(--surface-hover);
-  color: var(--text-primary);
-}
-
-.modal-body {
-  padding: 1.5rem;
-  flex: 1;
-  overflow-y: auto;
-}
-
-.modal-footer {
-  padding: 1.5rem;
-  border-top: 1px solid var(--border);
-  background: var(--surface-elevated);
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  color: var(--text-primary);
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.form-group input,
-.form-group select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text-primary);
-  font-size: 0.875rem;
-  transition: all 0.2s ease;
-}
-
-.form-group input:focus,
-.form-group select:focus {
-  outline: none;
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.1);
-}
-
-.form-group input::placeholder {
-  color: var(--text-muted);
-}
-
-/* Custom Marker Styles */
-.custom-marker {
-  background: transparent !important;
-  border: none !important;
-}
-
-.custom-marker div {
-  transition: all 0.2s ease;
-}
-
-.custom-marker:hover div {
-  transform: scale(1.2);
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-}
-
-/* Leaflet Popup Customization */
-.leaflet-popup-content-wrapper {
-  border-radius: var(--radius-lg) !important;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15) !important;
-}
-
-.leaflet-popup-content {
-  margin: 0 !important;
-  padding: 0 !important;
-}
-
-.leaflet-popup-tip {
-  background: var(--surface) !important;
-}
-
-/* Responsividade do modal */
-@media (max-width: 768px) {
-  .modal-overlay {
-    padding: 0.5rem;
-  }
-  
-  .modal-content {
-    max-height: 95vh;
-  }
-  
-  .modal-header,
-  .modal-body,
-  .modal-footer {
-    padding: 1rem;
-  }
-  
-  .modal-footer {
-    flex-direction: column;
-  }
-  
-  .modal-footer .btn {
     width: 100%;
   }
 }

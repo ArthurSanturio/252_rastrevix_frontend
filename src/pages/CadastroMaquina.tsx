@@ -3,35 +3,11 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { useAuth } from "../contexts/AuthContext"
-import MaquinaModal from "../components/MaquinaModal"
-import MaquinaEditarModal from "../components/MaquinaEditarModal"
-import ConfirmModal from "../components/ConfirmModal"
 import { maquinaService } from "../services/maquinaService"
-import { showSuccess, showError, showWarning } from "../utils/toast"
+import { clienteService, type Cliente } from "../services/clienteService"
+import { showSuccess, showError } from "../utils/toast"
 import "../styles/dashboard-pages.css"
 
-// Função auxiliar para formatar valor para exibição
-const formatValorDisplay = (value: number | undefined): string => {
-  if (value === undefined || value === null || typeof value !== 'number') {
-    return 'Não informado';
-  }
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
-
-// Função auxiliar para formatar eficiência
-const formatEficienciaDisplay = (value: number | undefined): string => {
-  if (value === undefined || value === null || typeof value !== 'number') {
-    return 'N/A';
-  }
-  return `${value.toFixed(1)}%`;
-};
-
-// Interfaces locais
 interface Maquina {
   id: string;
   codigo: string;
@@ -41,20 +17,12 @@ interface Maquina {
   fabricante?: string;
   modelo?: string;
   numeroSerie?: string;
-  dataFabricacao?: string;
-  dataInstalacao?: string;
-  valorCompra?: number;
-  eficiencia?: number;
-  localizacao?: string;
-  responsavel?: string;
-  especificacoes?: string;
-  observacoes?: string;
-  proximaManutencao?: string;
-  ultimaManutencao?: string;
-  horasTrabalhadas?: number;
-  horasManutencao?: number;
-  latitude?: number;
-  longitude?: number;
+  placa?: string;
+  grupo?: string;
+  equipamento?: string;
+  equipamentoNumero?: string;
+  dataInstalacaoEquipamento?: string;
+  clienteId?: string;
   dataCadastro: string;
   ultimaAtualizacao: string;
 }
@@ -66,454 +34,754 @@ interface MaquinaFormData {
   status: 'ativa' | 'inativa' | 'manutencao' | 'calibracao';
   fabricante: string;
   modelo: string;
-  numeroSerie: string;
-  dataFabricacao: string;
-  dataInstalacao: string;
-  valorCompra: string;
-  eficiencia: string;
-  localizacao: string;
-  responsavel: string;
-  especificacoes: string;
-  observacoes: string;
-  proximaManutencao: string;
-  ultimaManutencao: string;
-  horasTrabalhadas: string;
-  horasManutencao: string;
-  latitude: string;
-  longitude: string;
-}
-
-interface MaquinaCreateData {
-  codigo: string;
-  nome: string;
-  tipo: 'torno' | 'fresa' | 'soldadora' | 'prensa' | 'cnc' | 'outras';
-  status?: 'ativa' | 'inativa' | 'manutencao' | 'calibracao';
-  fabricante?: string;
-  modelo?: string;
-  numeroSerie?: string;
-  dataFabricacao?: string;
-  dataInstalacao?: string;
-  valorCompra?: number;
-  eficiencia?: number;
-  localizacao?: string;
-  responsavel?: string;
-  especificacoes?: string;
-  observacoes?: string;
-  proximaManutencao?: string;
-  ultimaManutencao?: string;
-  horasTrabalhadas?: number;
-  horasManutencao?: number;
-  latitude?: number;
-  longitude?: number;
+  placa: string;
+  grupo: string;
+  equipamento: string;
+  equipamentoNumero: string;
+  clienteId: string;
 }
 
 const CadastroMaquina: React.FC = () => {
   const { user } = useAuth()
-  const userName = user?.name || "Usuário"
 
-  // Estados para dados reais
+  // Estados
+  const [clientes, setClientes] = useState<Cliente[]>([])
   const [maquinas, setMaquinas] = useState<Maquina[]>([])
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
+  const [buscaCliente, setBuscaCliente] = useState('')
+  const [buscaVeiculo, setBuscaVeiculo] = useState('')
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [loadingVeiculos, setLoadingVeiculos] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
   const [maquinaSelecionada, setMaquinaSelecionada] = useState<Maquina | null>(null)
-  const [maquinaParaExcluir, setMaquinaParaExcluir] = useState<Maquina | null>(null)
-  const [stats, setStats] = useState({
-    total: 0,
-    ativas: 0,
-    inativas: 0,
-    manutencao: 0,
-    calibracao: 0,
-    eficienciaMedia: 0
+  const [formData, setFormData] = useState<MaquinaFormData>({
+    codigo: '',
+    nome: '',
+    tipo: 'outras',
+    status: 'ativa',
+    fabricante: '',
+    modelo: '',
+    placa: '',
+    grupo: '',
+    equipamento: '',
+    equipamentoNumero: '',
+    clienteId: ''
   })
 
-  // Carregar dados das máquinas
-  const carregarMaquinas = async () => {
+  // Carregar clientes
+  const carregarClientes = async () => {
     try {
       setLoading(true)
-      setError(null)
-
-      const response = await maquinaService.listarMaquinas({
-        limit: 100
+      const response = await clienteService.listarClientes({
+        limit: 1000
       })
-
-      setMaquinas(response.data.maquinas)
+      setClientes(response.data.clientes)
     } catch (err) {
-      console.error('Erro ao carregar máquinas:', err)
-      setError('Erro ao carregar máquinas. Verifique sua conexão.')
+      console.error('Erro ao carregar clientes:', err)
+      showError('Erro ao carregar clientes. Verifique sua conexão.')
     } finally {
       setLoading(false)
     }
   }
 
-  // Carregar estatísticas
-  const carregarEstatisticas = async () => {
+  // Carregar veículos do cliente selecionado
+  const carregarVeiculos = async (clienteId: string) => {
     try {
-      const response = await maquinaService.obterEstatisticas()
-      setStats(response.data)
+      setLoadingVeiculos(true)
+      const response = await maquinaService.listarMaquinas({
+        limit: 1000,
+        clienteId: clienteId
+      })
+      setMaquinas(response.data.maquinas)
     } catch (err) {
-      console.error('Erro ao carregar estatísticas:', err)
+      console.error('Erro ao carregar veículos:', err)
+      showError('Erro ao carregar veículos. Verifique sua conexão.')
+    } finally {
+      setLoadingVeiculos(false)
     }
   }
 
-  // Carregar dados quando o componente monta
   useEffect(() => {
-    carregarMaquinas()
-    carregarEstatisticas()
+    carregarClientes()
   }, [])
 
-  const handleSaveMaquina = async (novaMaquina: MaquinaFormData) => {
+  // Quando um cliente é selecionado, carregar seus veículos
+  useEffect(() => {
+    if (clienteSelecionado) {
+      carregarVeiculos(clienteSelecionado.id)
+    } else {
+      setMaquinas([])
+    }
+  }, [clienteSelecionado])
+
+  // Filtrar clientes por busca
+  const clientesFiltrados = clientes.filter(cliente =>
+    cliente.nome.toLowerCase().includes(buscaCliente.toLowerCase()) ||
+    cliente.empresa.toLowerCase().includes(buscaCliente.toLowerCase())
+  )
+
+  // Filtrar veículos por busca
+  const veiculosFiltrados = maquinas.filter(maquina =>
+    maquina.placa?.toLowerCase().includes(buscaVeiculo.toLowerCase()) ||
+    maquina.nome.toLowerCase().includes(buscaVeiculo.toLowerCase()) ||
+    maquina.modelo?.toLowerCase().includes(buscaVeiculo.toLowerCase())
+  )
+
+  // Abreviar nome do cliente
+  const abreviarNome = (nome: string): string => {
+    const palavras = nome.split(' ')
+    if (palavras.length <= 2) return nome
+    return palavras.slice(0, 2).map(p => p[0]).join('').toUpperCase()
+  }
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }))
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
     try {
-      // Converter dados do formulário para o formato esperado pela API
-      const dadosParaEnvio: MaquinaCreateData = {
-        codigo: novaMaquina.codigo,
-        nome: novaMaquina.nome,
-        tipo: novaMaquina.tipo,
-        status: novaMaquina.status,
-        fabricante: novaMaquina.fabricante || undefined,
-        modelo: novaMaquina.modelo || undefined,
-        numeroSerie: novaMaquina.numeroSerie || undefined,
-        dataFabricacao: novaMaquina.dataFabricacao || undefined,
-        dataInstalacao: novaMaquina.dataInstalacao || undefined,
-        valorCompra: novaMaquina.valorCompra ? Number(novaMaquina.valorCompra) : undefined,
-        eficiencia: novaMaquina.eficiencia ? Number(novaMaquina.eficiencia) : undefined,
-        localizacao: novaMaquina.localizacao || undefined,
-        responsavel: novaMaquina.responsavel || undefined,
-        especificacoes: novaMaquina.especificacoes || undefined,
-        observacoes: novaMaquina.observacoes || undefined,
-        proximaManutencao: novaMaquina.proximaManutencao || undefined,
-        ultimaManutencao: novaMaquina.ultimaManutencao || undefined,
-        horasTrabalhadas: novaMaquina.horasTrabalhadas ? Number(novaMaquina.horasTrabalhadas) : undefined,
-        horasManutencao: novaMaquina.horasManutencao ? Number(novaMaquina.horasManutencao) : undefined,
-        latitude: novaMaquina.latitude ? Number(novaMaquina.latitude) : undefined,
-        longitude: novaMaquina.longitude ? Number(novaMaquina.longitude) : undefined
+      const dadosParaEnvio: any = {
+        codigo: formData.codigo,
+        nome: formData.nome,
+        tipo: formData.tipo,
+        status: formData.status,
+        fabricante: formData.fabricante || undefined,
+        modelo: formData.modelo || undefined,
+        placa: formData.placa || undefined,
+        grupo: formData.grupo || undefined,
+        equipamento: formData.equipamento || undefined,
+        equipamentoNumero: formData.equipamentoNumero || undefined,
+        clienteId: formData.clienteId || undefined
       }
 
-      console.log('Dados sendo enviados para criação:', dadosParaEnvio)
+      if (maquinaSelecionada) {
+        // Atualizar
+        await maquinaService.atualizarMaquina({
+          id: maquinaSelecionada.id,
+          ...dadosParaEnvio
+        })
+        showSuccess(`Veículo ${formData.nome || formData.placa} atualizado com sucesso!`)
+        setIsEditarModalOpen(false)
+      } else {
+        // Criar
+        await maquinaService.criarMaquina(dadosParaEnvio)
+        showSuccess(`Veículo ${formData.nome || formData.placa} cadastrado com sucesso!`)
+        setIsModalOpen(false)
+      }
 
-      await maquinaService.criarMaquina(dadosParaEnvio)
+      // Limpar formulário
+      setFormData({
+        codigo: '',
+        nome: '',
+        tipo: 'outras',
+        status: 'ativa',
+        fabricante: '',
+        modelo: '',
+        placa: '',
+        grupo: '',
+        equipamento: '',
+        equipamentoNumero: '',
+        clienteId: clienteSelecionado?.id || ''
+      })
+      setMaquinaSelecionada(null)
 
-      // Recarregar lista de máquinas e estatísticas
-      await carregarMaquinas()
-      await carregarEstatisticas()
-
-      showSuccess(`Máquina ${novaMaquina.nome} cadastrada com sucesso!`)
-      setIsModalOpen(false)
+      // Recarregar veículos
+      if (clienteSelecionado) {
+        await carregarVeiculos(clienteSelecionado.id)
+      }
     } catch (err) {
-      console.error('Erro ao salvar máquina:', err)
-      showError('Erro ao cadastrar máquina. Tente novamente.')
+      console.error('Erro ao salvar veículo:', err)
+      showError(err instanceof Error ? err.message : 'Erro ao cadastrar veículo. Tente novamente.')
     }
   }
 
-  const handleEditarMaquina = (maquina: Maquina) => {
+  const handleEditar = (maquina: Maquina) => {
     setMaquinaSelecionada(maquina)
+    setFormData({
+      codigo: maquina.codigo,
+      nome: maquina.nome,
+      tipo: maquina.tipo,
+      status: maquina.status,
+      fabricante: maquina.fabricante || '',
+      modelo: maquina.modelo || '',
+      placa: maquina.placa || '',
+      grupo: maquina.grupo || '',
+      equipamento: maquina.equipamento || '',
+      equipamentoNumero: maquina.equipamentoNumero || '',
+      clienteId: maquina.clienteId || clienteSelecionado?.id || ''
+    })
     setIsEditarModalOpen(true)
   }
 
-  const handleSalvarEdicao = async (maquinaAtualizada: Maquina) => {
-    try {
-      // Preparar dados para envio, removendo campos vazios
-      const dadosParaEnvio = {
-        id: maquinaAtualizada.id,
-        codigo: maquinaAtualizada.codigo,
-        nome: maquinaAtualizada.nome,
-        tipo: maquinaAtualizada.tipo,
-        status: maquinaAtualizada.status,
-        fabricante: maquinaAtualizada.fabricante || undefined,
-        modelo: maquinaAtualizada.modelo || undefined,
-        numeroSerie: maquinaAtualizada.numeroSerie || undefined,
-        dataFabricacao: maquinaAtualizada.dataFabricacao || undefined,
-        dataInstalacao: maquinaAtualizada.dataInstalacao || undefined,
-        valorCompra: maquinaAtualizada.valorCompra || undefined,
-        eficiencia: maquinaAtualizada.eficiencia || undefined,
-        localizacao: maquinaAtualizada.localizacao || undefined,
-        responsavel: maquinaAtualizada.responsavel || undefined,
-        especificacoes: maquinaAtualizada.especificacoes || undefined,
-        observacoes: maquinaAtualizada.observacoes || undefined,
-        proximaManutencao: maquinaAtualizada.proximaManutencao || undefined,
-        ultimaManutencao: maquinaAtualizada.ultimaManutencao || undefined,
-        horasTrabalhadas: maquinaAtualizada.horasTrabalhadas || undefined,
-        horasManutencao: maquinaAtualizada.horasManutencao || undefined
+  const handleExcluir = async (maquina: Maquina) => {
+    if (window.confirm(`Tem certeza que deseja excluir o veículo ${maquina.nome || maquina.placa}?`)) {
+      try {
+        await maquinaService.deletarMaquina(maquina.id)
+        showSuccess(`Veículo ${maquina.nome || maquina.placa} excluído com sucesso!`)
+        if (clienteSelecionado) {
+          await carregarVeiculos(clienteSelecionado.id)
+        }
+      } catch (err) {
+        console.error('Erro ao excluir veículo:', err)
+        showError('Erro ao excluir veículo. Tente novamente.')
       }
-
-      console.log('Dados sendo enviados para atualização:', dadosParaEnvio)
-
-      await maquinaService.atualizarMaquina(dadosParaEnvio)
-
-      // Recarregar lista de máquinas e estatísticas
-      await carregarMaquinas()
-      await carregarEstatisticas()
-
-      showSuccess(`Máquina ${maquinaAtualizada.nome} atualizada com sucesso!`)
-      setIsEditarModalOpen(false)
-    } catch (err) {
-      console.error('Erro ao atualizar máquina:', err)
-      showError('Erro ao atualizar máquina. Tente novamente.')
     }
   }
 
-  const handleExcluirMaquina = (maquina: Maquina) => {
-    setMaquinaParaExcluir(maquina)
-    setIsConfirmModalOpen(true)
-  }
-
-  const confirmarExclusao = async () => {
-    if (!maquinaParaExcluir) return
-
+  const formatarData = (data?: string) => {
+    if (!data) return '--'
     try {
-      await maquinaService.deletarMaquina(maquinaParaExcluir.id)
-
-      // Recarregar lista de máquinas e estatísticas
-      await carregarMaquinas()
-      await carregarEstatisticas()
-
-      showSuccess(`Máquina ${maquinaParaExcluir.nome} excluída com sucesso!`)
-      setMaquinaParaExcluir(null)
-    } catch (err) {
-      console.error('Erro ao excluir máquina:', err)
-      if (err instanceof Error && err.message.includes('não encontrada')) {
-        showWarning('Esta máquina já foi excluída ou não existe mais. A lista será atualizada.')
-        await carregarMaquinas()
-      } else {
-        showError('Erro ao excluir máquina. Tente novamente.')
-      }
-      setMaquinaParaExcluir(null)
-    }
-  }
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'ativa':
-        return 'status-ativo'
-      case 'inativa':
-        return 'status-inativo'
-      case 'manutencao':
-        return 'status-manutencao'
-      case 'calibracao':
-        return 'status-calibracao'
-      default:
-        return ''
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'ativa':
-        return 'ATIVA'
-      case 'inativa':
-        return 'INATIVA'
-      case 'manutencao':
-        return 'EM MANUTENÇÃO'
-      case 'calibracao':
-        return 'EM CALIBRAÇÃO'
-      default:
-        return status.toUpperCase()
-    }
-  }
-
-  const getTipoText = (tipo: string) => {
-    switch (tipo) {
-      case 'torno':
-        return 'Torno'
-      case 'fresa':
-        return 'Fresa'
-      case 'soldadora':
-        return 'Soldadora'
-      case 'prensa':
-        return 'Prensa'
-      case 'cnc':
-        return 'CNC'
-      case 'outras':
-        return 'Outras'
-      default:
-        return tipo
+      const date = new Date(data)
+      return date.toLocaleDateString('pt-BR')
+    } catch {
+      return '--'
     }
   }
 
   return (
-    <div className="dashboard-content">
-      <div className="dashboard-welcome">
-        <h2>Cadastro de Máquinas, {userName}!</h2>
-        <p>Gerencie o inventário e informações das máquinas</p>
-        <button
-          className="btn btn-primary"
-          onClick={() => setIsModalOpen(true)}
-          style={{ marginTop: '1rem' }}
-        >
-          Adicionar Máquina
-        </button>
-      </div>
-
-      <div className="dashboard-grid">
-        <div className="card card-elevated">
-          <div className="stats-content">
-            <h3>TOTAL DE MÁQUINAS</h3>
-            <p className="stats-number">{stats.total.toLocaleString()}</p>
-            <span className="stats-change positive">Máquinas cadastradas</span>
-          </div>
-        </div>
-
-        <div className="card card-elevated">
-          <div className="stats-content">
-            <h3>MÁQUINAS ATIVAS</h3>
-            <p className="stats-number">{stats.ativas.toLocaleString()}</p>
-            <span className="stats-change positive">Em operação</span>
-          </div>
-        </div>
-
-        <div className="card card-elevated">
-          <div className="stats-content">
-            <h3>EM MANUTENÇÃO</h3>
-            <p className="stats-number">{stats.manutencao.toLocaleString()}</p>
-            <span className="stats-change warning">Aguardando manutenção</span>
-          </div>
-        </div>
-
-        <div className="card card-elevated">
-          <div className="stats-content">
-            <h3>EFICIÊNCIA MÉDIA</h3>
-            <p className="stats-number">{formatEficienciaDisplay(stats.eficienciaMedia)}</p>
-            <span className="stats-change positive">Performance média</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="dashboard-bottom-sections">
-        <div className="card card-elevated">
-          <h2>Máquinas Cadastradas ({maquinas.length})</h2>
-          {loading ? (
-            <div className="loading-state">
-              <p>Carregando máquinas...</p>
-            </div>
-          ) : error ? (
-            <div className="error-state">
-              <p>{error}</p>
-              <button onClick={carregarMaquinas} className="btn btn-primary">
-                Tentar Novamente
-              </button>
-            </div>
-          ) : maquinas.length === 0 ? (
-            <div className="no-results">
-              <p>Nenhuma máquina cadastrada ainda.</p>
-            </div>
-          ) : (
-            <div className="maquinas-list">
-              {maquinas.slice(0, 5).map((maquina) => (
-                <div key={maquina.id} className="maquina-item">
-                  <div className="maquina-info">
-                    <div className="maquina-header">
-                      <h3>{maquina.nome}</h3>
-                      <span className={`status-badge ${getStatusClass(maquina.status)}`}>
-                        {getStatusText(maquina.status)}
-                      </span>
-                    </div>
-                    <div className="maquina-details">
-                      <div className="detail-group">
-                        <span className="detail-label">Código:</span>
-                        <span className="detail-value">{maquina.codigo}</span>
-                      </div>
-                      <div className="detail-group">
-                        <span className="detail-label">Tipo:</span>
-                        <span className="detail-value">{getTipoText(maquina.tipo)}</span>
-                      </div>
-                      <div className="detail-group">
-                        <span className="detail-label">Fabricante:</span>
-                        <span className="detail-value">{maquina.fabricante || 'Não informado'}</span>
-                      </div>
-                      <div className="detail-group">
-                        <span className="detail-label">Valor:</span>
-                        <span className="detail-value">{formatValorDisplay(maquina.valorCompra)}</span>
-                      </div>
-                      <div className="detail-group">
-                        <span className="detail-label">Eficiência:</span>
-                        <span className="detail-value">{formatEficienciaDisplay(maquina.eficiencia)}</span>
-                      </div>
-                      <div className="detail-group">
-                        <span className="detail-label">Cadastrada em:</span>
-                        <span className="detail-value">{new Date(maquina.dataCadastro).toLocaleDateString('pt-BR')}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="maquina-actions">
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => handleEditarMaquina(maquina)}
-                    >
-                      Editar
-                    </button>
-                    <button
-                      className="btn btn-danger"
-                      onClick={() => handleExcluirMaquina(maquina)}
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+    <div className="dashboard-page">
+      <div className="page-header">
+        <h1>CADASTRO • MÁQUINA/VEÍCULO</h1>
+        <div className="header-actions">
+          {clienteSelecionado && (
+            <button
+              className="btn btn-primary"
+              onClick={() => {
+                setMaquinaSelecionada(null)
+                setFormData({
+                  codigo: '',
+                  nome: '',
+                  tipo: 'outras',
+                  status: 'ativa',
+                  fabricante: '',
+                  modelo: '',
+                  placa: '',
+                  grupo: '',
+                  equipamento: '',
+                  equipamentoNumero: '',
+                  clienteId: clienteSelecionado.id
+                })
+                setIsModalOpen(true)
+              }}
+            >
+              + NOVO
+            </button>
           )}
         </div>
+      </div>
 
-        <div className="card card-elevated">
-          <h2>Máquinas em Manutenção</h2>
-          <div className="project-list">
-            {maquinas.filter(m => m.status === 'manutencao').length === 0 ? (
-              <div className="no-results">
-                <p>Nenhuma máquina em manutenção no momento.</p>
-              </div>
+      <div className="maquina-veiculo-container">
+        {/* Coluna Esquerda - Lista de Clientes */}
+        <div className="clientes-column">
+          <div className="search-box">
+            <input
+              type="text"
+              placeholder="Procurar Cliente"
+              value={buscaCliente}
+              onChange={(e) => setBuscaCliente(e.target.value)}
+              className="search-input"
+            />
+            <span className="search-icon">🔍</span>
+          </div>
+
+          <div className="clientes-list">
+            {loading ? (
+              <div className="loading">Carregando clientes...</div>
+            ) : clientesFiltrados.length === 0 ? (
+              <div className="empty-state">Nenhum cliente encontrado</div>
             ) : (
-              maquinas.filter(m => m.status === 'manutencao').slice(0, 2).map((maquina) => (
-                <div key={maquina.id} className="project-item">
-                  <div className="project-header">
-                    <h3>{maquina.nome}</h3>
-                    <span className="project-status in-progress">EM MANUTENÇÃO</span>
-                  </div>
-                  <div className="project-progress">
-                    <div className="progress-bar">
-                      <div className="progress-fill" style={{ width: "40%" }}></div>
-                    </div>
-                    <span className="progress-text">40% concluído</span>
-                  </div>
-                  <div className="project-meta">
-                    <span>{maquina.codigo}</span>
-                    <span>Próxima: {maquina.proximaManutencao ? new Date(maquina.proximaManutencao).toLocaleDateString('pt-BR') : 'Não agendada'}</span>
-                  </div>
+              clientesFiltrados.map((cliente) => (
+                <div
+                  key={cliente.id}
+                  className={`cliente-item ${clienteSelecionado?.id === cliente.id ? 'selected' : ''}`}
+                  onClick={() => setClienteSelecionado(cliente)}
+                >
+                  <div className="cliente-nome">{cliente.nome}</div>
+                  <div className="cliente-abrev">ABREV. NOME {abreviarNome(cliente.nome)}</div>
+                  {cliente.status === 'inativo' && (
+                    <span className="cliente-bloqueado">[Bloqueado]</span>
+                  )}
                 </div>
               ))
             )}
           </div>
         </div>
+
+        {/* Coluna Direita - Lista de Veículos */}
+        <div className="veiculos-column">
+          {!clienteSelecionado ? (
+            <div className="empty-state-large">
+              <h2>Máquina/Veículo</h2>
+              <p>
+                Esta é a sua lista de máquina/veículo. Clique no nome do cliente desejado à esquerda para ver e alterar informações ou adicionar um novo registro.
+              </p>
+              <div className="illustration">🚗</div>
+            </div>
+          ) : (
+            <>
+              <div className="search-box">
+                <input
+                  type="text"
+                  placeholder="Procurar Veículo"
+                  value={buscaVeiculo}
+                  onChange={(e) => setBuscaVeiculo(e.target.value)}
+                  className="search-input"
+                />
+                <span className="search-icon">🔍</span>
+              </div>
+
+              {loadingVeiculos ? (
+                <div className="loading">Carregando veículos...</div>
+              ) : veiculosFiltrados.length === 0 ? (
+                <div className="empty-state">
+                  Nenhum veículo encontrado para {clienteSelecionado.nome}. Clique em "+ NOVO" para adicionar.
+                </div>
+              ) : (
+                <div className="veiculos-table-container">
+                  <table className="veiculos-table">
+                    <thead>
+                      <tr>
+                        <th>PLACA</th>
+                        <th>GRUPO</th>
+                        <th>MARCA</th>
+                        <th>MODELO</th>
+                        <th>EQUIP.</th>
+                        <th>EQUIP. Nº</th>
+                        <th>DT. INSTAL</th>
+                        <th>AÇÕES</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {veiculosFiltrados.map((maquina) => (
+                        <tr key={maquina.id}>
+                          <td>{maquina.placa || '--'}</td>
+                          <td>{maquina.grupo || '--'}</td>
+                          <td>{maquina.fabricante || '--'}</td>
+                          <td>{maquina.modelo || '--'}</td>
+                          <td>{maquina.equipamento || '--'}</td>
+                          <td>{maquina.equipamentoNumero || '--'}</td>
+                          <td>{formatarData(maquina.dataInstalacaoEquipamento)}</td>
+                          <td>
+                            <div className="action-buttons">
+                              <button
+                                className="btn-icon"
+                                onClick={() => handleEditar(maquina)}
+                                title="Editar"
+                              >
+                                {maquina.tipo === 'outras' ? '🚗' : '🚛'}
+                              </button>
+                              <button
+                                className="btn-icon btn-danger"
+                                onClick={() => handleExcluir(maquina)}
+                                title="Excluir"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
-      {/* Modais */}
-      <MaquinaModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveMaquina}
-      />
+      {/* Modal de Cadastro */}
+      {isModalOpen && clienteSelecionado && (
+        <div className="modal-overlay" onClick={() => setIsModalOpen(false)}>
+          <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Novo Veículo</h2>
+              <button className="modal-close" onClick={() => setIsModalOpen(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSubmit} className="veiculo-form">
+                {/* Seção: Informações Básicas */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Informações Básicas</h3>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="placa">Placa *</label>
+                      <input
+                        type="text"
+                        id="placa"
+                        name="placa"
+                        value={formData.placa}
+                        onChange={handleChange}
+                        required
+                        placeholder="Ex: ABC-1234"
+                        className="form-input"
+                      />
+                    </div>
 
-      <MaquinaEditarModal
-        isOpen={isEditarModalOpen}
-        onClose={() => setIsEditarModalOpen(false)}
-        onSave={handleSalvarEdicao}
-        maquina={maquinaSelecionada}
-      />
+                    <div className="form-group">
+                      <label htmlFor="codigo">Código *</label>
+                      <input
+                        type="text"
+                        id="codigo"
+                        name="codigo"
+                        value={formData.codigo}
+                        onChange={handleChange}
+                        required
+                        placeholder="Código único"
+                        className="form-input"
+                      />
+                    </div>
 
-      <ConfirmModal
-        isOpen={isConfirmModalOpen}
-        onClose={() => {
-          setIsConfirmModalOpen(false)
-          setMaquinaParaExcluir(null)
-        }}
-        onConfirm={confirmarExclusao}
-        title="Confirmar Exclusão"
-        message={`Tem certeza que deseja excluir a máquina "${maquinaParaExcluir?.nome}"? Esta ação não pode ser desfeita.`}
-        confirmText="Confirmar Exclusão"
-        cancelText="Cancelar"
-        type="danger"
-      />
+                    <div className="form-group">
+                      <label htmlFor="nome">Nome *</label>
+                      <input
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        value={formData.nome}
+                        onChange={handleChange}
+                        required
+                        placeholder="Nome do veículo"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="grupo">Grupo</label>
+                      <input
+                        type="text"
+                        id="grupo"
+                        name="grupo"
+                        value={formData.grupo}
+                        onChange={handleChange}
+                        placeholder="Ex: Ônibus, Caminhão"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção: Dados do Veículo */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Dados do Veículo</h3>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="fabricante">Marca</label>
+                      <input
+                        type="text"
+                        id="fabricante"
+                        name="fabricante"
+                        value={formData.fabricante}
+                        onChange={handleChange}
+                        placeholder="Ex: Mercedes, Volvo"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="modelo">Modelo</label>
+                      <input
+                        type="text"
+                        id="modelo"
+                        name="modelo"
+                        value={formData.modelo}
+                        onChange={handleChange}
+                        placeholder="Ex: Sprinter, FH"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção: Equipamento de Rastreamento */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Equipamento de Rastreamento</h3>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="equipamento">Equipamento</label>
+                      <input
+                        type="text"
+                        id="equipamento"
+                        name="equipamento"
+                        value={formData.equipamento}
+                        onChange={handleChange}
+                        placeholder="Ex: ST340"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="equipamentoNumero">Nº Equipamento</label>
+                      <input
+                        type="text"
+                        id="equipamentoNumero"
+                        name="equipamentoNumero"
+                        value={formData.equipamentoNumero}
+                        onChange={handleChange}
+                        placeholder="Ex: 807394967"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção: Status e Configurações */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Status e Configurações</h3>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="tipo">Tipo</label>
+                      <select
+                        id="tipo"
+                        name="tipo"
+                        value={formData.tipo}
+                        onChange={handleChange}
+                        className="form-select"
+                      >
+                        <option value="outras">Outras</option>
+                        <option value="torno">Torno</option>
+                        <option value="fresa">Fresa</option>
+                        <option value="soldadora">Soldadora</option>
+                        <option value="prensa">Prensa</option>
+                        <option value="cnc">CNC</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="status">Status</label>
+                      <select
+                        id="status"
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        className="form-select"
+                      >
+                        <option value="ativa">Ativa</option>
+                        <option value="inativa">Inativa</option>
+                        <option value="manutencao">Manutenção</option>
+                        <option value="calibracao">Calibração</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="btn btn-secondary"
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Cadastrar Veículo
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição */}
+      {isEditarModalOpen && maquinaSelecionada && (
+        <div className="modal-overlay" onClick={() => setIsEditarModalOpen(false)}>
+          <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Editar Veículo</h2>
+              <button className="modal-close" onClick={() => setIsEditarModalOpen(false)}>×</button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSubmit} className="veiculo-form">
+                {/* Seção: Informações Básicas */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Informações Básicas</h3>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="placa">Placa *</label>
+                      <input
+                        type="text"
+                        id="placa"
+                        name="placa"
+                        value={formData.placa}
+                        onChange={handleChange}
+                        required
+                        placeholder="Ex: ABC-1234"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="codigo">Código *</label>
+                      <input
+                        type="text"
+                        id="codigo"
+                        name="codigo"
+                        value={formData.codigo}
+                        onChange={handleChange}
+                        required
+                        placeholder="Código único"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="nome">Nome *</label>
+                      <input
+                        type="text"
+                        id="nome"
+                        name="nome"
+                        value={formData.nome}
+                        onChange={handleChange}
+                        required
+                        placeholder="Nome do veículo"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="grupo">Grupo</label>
+                      <input
+                        type="text"
+                        id="grupo"
+                        name="grupo"
+                        value={formData.grupo}
+                        onChange={handleChange}
+                        placeholder="Ex: Ônibus, Caminhão"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção: Dados do Veículo */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Dados do Veículo</h3>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="fabricante">Marca</label>
+                      <input
+                        type="text"
+                        id="fabricante"
+                        name="fabricante"
+                        value={formData.fabricante}
+                        onChange={handleChange}
+                        placeholder="Ex: Mercedes, Volvo"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="modelo">Modelo</label>
+                      <input
+                        type="text"
+                        id="modelo"
+                        name="modelo"
+                        value={formData.modelo}
+                        onChange={handleChange}
+                        placeholder="Ex: Sprinter, FH"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção: Equipamento de Rastreamento */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Equipamento de Rastreamento</h3>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="equipamento">Equipamento</label>
+                      <input
+                        type="text"
+                        id="equipamento"
+                        name="equipamento"
+                        value={formData.equipamento}
+                        onChange={handleChange}
+                        placeholder="Ex: ST340"
+                        className="form-input"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="equipamentoNumero">Nº Equipamento</label>
+                      <input
+                        type="text"
+                        id="equipamentoNumero"
+                        name="equipamentoNumero"
+                        value={formData.equipamentoNumero}
+                        onChange={handleChange}
+                        placeholder="Ex: 807394967"
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Seção: Status e Configurações */}
+                <div className="form-section">
+                  <h3 className="form-section-title">Status e Configurações</h3>
+                  <div className="form-grid-2">
+                    <div className="form-group">
+                      <label htmlFor="tipo">Tipo</label>
+                      <select
+                        id="tipo"
+                        name="tipo"
+                        value={formData.tipo}
+                        onChange={handleChange}
+                        className="form-select"
+                      >
+                        <option value="outras">Outras</option>
+                        <option value="torno">Torno</option>
+                        <option value="fresa">Fresa</option>
+                        <option value="soldadora">Soldadora</option>
+                        <option value="prensa">Prensa</option>
+                        <option value="cnc">CNC</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="status">Status</label>
+                      <select
+                        id="status"
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        className="form-select"
+                      >
+                        <option value="ativa">Ativa</option>
+                        <option value="inativa">Inativa</option>
+                        <option value="manutencao">Manutenção</option>
+                        <option value="calibracao">Calibração</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditarModalOpen(false)}
+                    className="btn btn-secondary"
+                  >
+                    Cancelar
+                  </button>
+                  <button type="submit" className="btn btn-primary">
+                    Atualizar Veículo
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

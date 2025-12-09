@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  Home, 
-  Map, 
-  Plus, 
-  User, 
-  Cog, 
-  Users, 
-  Settings, 
+import {
+  Home,
+  Map,
+  Plus,
+  User,
+  Cog,
+  Users,
+  Settings,
   HelpCircle,
   ChevronDown
 } from 'lucide-react';
@@ -36,7 +36,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
 
   const getIcon = (iconName: string, size: number = 20) => {
     const iconProps = { size, className: "sidebar-icon" };
-    
+
     switch (iconName) {
       case 'home':
         return <Home {...iconProps} />;
@@ -88,6 +88,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
           icon: 'cog'
         },
         {
+          name: 'Rastreador',
+          path: '/cadastro/rastreador',
+          icon: 'map'
+        },
+        {
           name: 'Colaborador',
           path: '/cadastro/colaborador',
           icon: 'users'
@@ -114,20 +119,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
     }
   ];
 
-  const filteredMenuItems = isAuthenticated 
-    ? menuItems 
+  const filteredMenuItems = isAuthenticated
+    ? menuItems
     : menuItems.filter(item => !item.protected);
 
   return (
     <>
       {/* Overlay para mobile */}
       {isOpen && (
-        <div 
+        <div
           className="sidebar-overlay"
           onClick={onClose}
         />
       )}
-      
+
       {/* Sidebar */}
       <div className={`sidebar ${isOpen ? 'sidebar-open' : ''} ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
         <div className="sidebar-header">
@@ -135,7 +140,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
             <span className="logo-icon"></span>
             {!isCollapsed && <span className="logo-text">Rastrevix</span>}
           </div>
-          <button 
+          <button
             className="sidebar-collapse-btn"
             onClick={onToggleCollapse}
             aria-label={isCollapsed ? "Expandir sidebar" : "Colapsar sidebar"}
@@ -150,7 +155,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
               <li key={item.path || item.name} className="sidebar-item">
                 {item.submenu ? (
                   <div className="sidebar-submenu">
-                    <div 
+                    <div
                       className="sidebar-link sidebar-submenu-header"
                       onClick={toggleCadastro}
                       style={{ cursor: 'pointer' }}
@@ -166,9 +171,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
                           <li key={subItem.path} className="sidebar-subitem">
                             <Link
                               to={subItem.path}
-                              className={`sidebar-sublink ${
-                                location.pathname === subItem.path ? 'active' : ''
-                              }`}
+                              className={`sidebar-sublink ${location.pathname === subItem.path ? 'active' : ''
+                                }`}
                               onClick={onClose}
                             >
                               {getIcon(subItem.icon, 16)}
@@ -182,9 +186,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
                 ) : (
                   <Link
                     to={item.path}
-                    className={`sidebar-link ${
-                      location.pathname === item.path ? 'active' : ''
-                    }`}
+                    className={`sidebar-link ${location.pathname === item.path ? 'active' : ''
+                      }`}
                     onClick={onClose}
                     title={isCollapsed ? item.name : undefined}
                   >
@@ -213,7 +216,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
                   </div>
                 </div>
               )}
-              <button 
+              <button
                 className="logout-btn"
                 onClick={handleLogout}
                 aria-label="Sair"

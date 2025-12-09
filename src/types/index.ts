@@ -18,6 +18,12 @@ export type Maquina = {
     eficiencia?: number;
     latitude?: number;
     longitude?: number;
+    clienteId?: string;
+    placa?: string;
+    grupo?: string;
+    equipamento?: string;
+    equipamentoNumero?: string;
+    dataInstalacaoEquipamento?: string;
     dataCadastro: string;
     ultimaAtualizacao: string;
 };
@@ -115,4 +121,88 @@ export interface ColaboradorCreateData {
     dataNascimento?: string;
     observacoes?: string;
     supervisorId?: string;
+}
+
+// Rastreador types
+export interface Rastreador {
+    id: string;
+    numeroSerial: string;
+    imei: string;
+    status: 'ativo' | 'inativo' | 'manutencao' | 'bloqueado';
+    modelo?: string;
+    fabricante?: string;
+    versaoFirmware?: string;
+    observacoes?: string;
+    placa?: string;
+    nome?: string;
+    condutor?: string;
+    tipoVeiculo?: 'onibus' | 'caminhao' | 'carro';
+    bloqueado?: boolean;
+    tipoTransmissao?: string;
+    dataCadastro: string;
+    ultimaAtualizacao: string;
+    ultimaComunicacao?: string;
+}
+
+export interface DadosRastreador {
+    id: string;
+    rastreadorId: string;
+    timestamp: string;
+    latitude?: number;
+    longitude?: number;
+    altitude?: number;
+    velocidade?: number;
+    direcao?: number;
+    satelites?: number;
+    ignicao?: boolean;
+    odometro?: number;
+    horimetro?: number;
+    tensaoEntrada?: number;
+    tensaoBateria?: number;
+    velocidadeCAN?: number;
+    rpm?: number;
+    combustivel?: number;
+    temperatura?: number;
+    canAtivo?: boolean;
+    eventoId?: number;
+    eventoStatus?: string;
+    eventoNome?: string;
+}
+
+export interface RastreadorComPosicao extends Rastreador {
+    posicaoAtual?: DadosRastreador;
+}
+
+export interface RastreadorListResponse {
+    message: string;
+    data: {
+        rastreadores: Rastreador[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+        };
+    };
+}
+
+export interface RastreadorPosicaoResponse {
+    message: string;
+    data: {
+        posicao: DadosRastreador;
+    };
+}
+
+export interface RastreadorDadosResponse {
+    message: string;
+    data: {
+        rastreador: Rastreador;
+        dados: DadosRastreador[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+        };
+    };
 }

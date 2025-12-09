@@ -23,6 +23,12 @@ export interface Maquina {
     horasManutencao?: number;
     latitude?: number;
     longitude?: number;
+    clienteId?: string;
+    placa?: string;
+    grupo?: string;
+    equipamento?: string;
+    equipamentoNumero?: string;
+    dataInstalacaoEquipamento?: string;
     dataCadastro: string;
     ultimaAtualizacao: string;
 }
@@ -49,6 +55,12 @@ export interface MaquinaCreateData {
     horasManutencao?: number;
     latitude?: number;
     longitude?: number;
+    clienteId?: string;
+    placa?: string;
+    grupo?: string;
+    equipamento?: string;
+    equipamentoNumero?: string;
+    dataInstalacaoEquipamento?: string;
 }
 
 export interface MaquinaUpdateData extends Partial<MaquinaCreateData> {
@@ -101,6 +113,7 @@ class MaquinaService {
         search?: string;
         status?: string;
         tipo?: string;
+        clienteId?: string;
     }): Promise<MaquinaListResponse> {
         const queryParams = new URLSearchParams();
 
@@ -109,6 +122,7 @@ class MaquinaService {
         if (params?.search) queryParams.append('search', params.search);
         if (params?.status) queryParams.append('status', params.status);
         if (params?.tipo) queryParams.append('tipo', params.tipo);
+        if (params?.clienteId) queryParams.append('clienteId', params.clienteId);
 
         const endpoint = queryParams.toString()
             ? `${this.baseEndpoint}?${queryParams.toString()}`
