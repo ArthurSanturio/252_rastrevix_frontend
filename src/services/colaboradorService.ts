@@ -43,6 +43,7 @@ export interface ColaboradorCreateData {
     dataNascimento?: string;
     observacoes?: string;
     supervisorId?: string;
+    clienteId?: string; // Para atribuição automática ao criar
 }
 
 export interface ColaboradorUpdateData extends Partial<ColaboradorCreateData> {
@@ -141,6 +142,36 @@ class ColaboradorService {
         return apiService.request<{ message: string }>(`${this.baseEndpoint}/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    // Listar colaboradores de um cliente
+    async listarColaboradoresDoCliente(clienteId: string): Promise<ColaboradorListResponse> {
+        return apiService.request<ColaboradorListResponse>(`${this.baseEndpoint}/cliente/${clienteId}`);
+    }
+
+    // Listar colaboradores disponíveis (não atribuídos) para um cliente
+    async listarColaboradoresDisponiveis(clienteId: string): Promise<ColaboradorListResponse> {
+        return apiService.request<ColaboradorListResponse>(`${this.baseEndpoint}/disponiveis/${clienteId}`);
+    }
+
+    // Atribuir colaborador a um cliente
+    async atribuirColaboradorACliente(clienteId: string, colaboradorId: string): Promise<{ message: string; data: { relacionamento: any } }> {
+        return apiService.request<{ message: string; data: { relacionamento: any } }>(
+            `${this.baseEndpoint}/cliente/${clienteId}/atribuir/${colaboradorId}`,
+            {
+                method: 'POST',
+            }
+        );
+    }
+
+    // Remover colaborador de um cliente
+    async removerColaboradorDoCliente(clienteId: string, colaboradorId: string): Promise<{ message: string }> {
+        return apiService.request<{ message: string }>(
+            `${this.baseEndpoint}/cliente/${clienteId}/remover/${colaboradorId}`,
+            {
+                method: 'DELETE',
+            }
+        );
     }
 }
 

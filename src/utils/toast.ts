@@ -6,6 +6,7 @@ const defaultOptions = {
     autoClose: 3000,
     hideProgressBar: false,
     closeOnClick: true,
+    closeButton: true,
     pauseOnHover: true,
     draggable: true,
     theme: 'colored' as const,

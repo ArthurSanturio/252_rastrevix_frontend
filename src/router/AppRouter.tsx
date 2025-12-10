@@ -59,10 +59,55 @@ const AppRouter: React.FC = () => {
           newestOnTop={false}
           closeOnClick
           rtl={false}
-          pauseOnFocusLoss
-          draggable
-          pauseOnHover
+          pauseOnFocusLoss={true}
+          draggable={false}
+          pauseOnHover={true}
+          limit={5}
           theme="colored"
+          enableMultiContainer={false}
+          transition="slide"
+          closeButton={({ closeToast }) => (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                closeToast();
+              }}
+              style={{
+                color: 'white',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: '4px 8px',
+                fontSize: '20px',
+                fontWeight: 'bold',
+                opacity: 0.8,
+                transition: 'all 0.2s',
+                zIndex: 10000,
+                position: 'relative',
+                lineHeight: '1',
+                minWidth: '24px',
+                minHeight: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.opacity = '1';
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+                e.currentTarget.style.borderRadius = '4px';
+                e.currentTarget.style.transform = 'scale(1.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.opacity = '0.8';
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+              aria-label="Fechar"
+            >
+              ×
+            </button>
+          )}
           style={{ zIndex: 9999 }}
         />
       </Router>

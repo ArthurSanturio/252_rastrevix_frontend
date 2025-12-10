@@ -8,24 +8,12 @@ import ColaboradorDetalhesModal from "../components/ColaboradorDetalhesModal"
 import ColaboradorEditarModal from "../components/ColaboradorEditarModal"
 import ConfirmModal from "../components/ConfirmModal"
 import { colaboradorService } from "../services/colaboradorService"
+import { clienteService } from "../services/clienteService"
 import { showSuccess, showError, showWarning } from "../utils/toast"
 import "../styles/colaboradores.css"
 import "../styles/dashboard-pages.css"
 
-// Função auxiliar para formatar salário para exibição
-const formatSalarioDisplay = (value: number | undefined): string => {
-  if (value === undefined || value === null) {
-    return 'Não informado';
-  }
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(value);
-};
-
-// Interfaces locais para evitar problemas de importação
+// Interfaces locais
 interface Colaborador {
   id: string;
   nome: string;
@@ -46,6 +34,25 @@ interface Colaborador {
   dataNascimento?: string;
   observacoes?: string;
   supervisorId?: string;
+  dataCadastro: string;
+  ultimaAtualizacao: string;
+}
+
+interface Cliente {
+  id: string;
+  nome: string;
+  email: string;
+  telefone: string;
+  empresa: string;
+  status: 'ativo' | 'inativo' | 'pendente';
+  endereco?: string;
+  cidade?: string;
+  estado?: string;
+  cep?: string;
+  cnpj?: string;
+  observacoes?: string;
+  contatoResponsavel?: string;
+  telefoneResponsavel?: string;
   dataCadastro: string;
   ultimaAtualizacao: string;
 }
@@ -95,8 +102,19 @@ interface ColaboradorCreateData {
 const CadastroColaborador: React.FC = () => {
   const { user } = useAuth()
   const userName = user?.name || "Usuário"
-  const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("todos")
+
+  // Estados para clientes
+  const [clientes, setClientes] = useState<Cliente[]>([])
+  const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
+  const [searchCliente, setSearchCliente] = useState("")
+  const [loadingClientes, setLoadingClientes] = useState(true)
+
+  // Estados para colaboradores
+  const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
+  const [searchColaborador, setSearchColaborador] = useState("")
+  const [loadingColaboradores, setLoadingColaboradores] = useState(false)
+
+  // Estados para modais
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDetalhesModalOpen, setIsDetalhesModalOpen] = useState(false)
   const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
@@ -104,74 +122,209 @@ const CadastroColaborador: React.FC = () => {
   const [colaboradorSelecionado, setColaboradorSelecionado] = useState<Colaborador | null>(null)
   const [colaboradorParaExcluir, setColaboradorParaExcluir] = useState<Colaborador | null>(null)
 
-  // Estados para dados reais
-  const [colaboradores, setColaboradores] = useState<Colaborador[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [stats, setStats] = useState({
-    total: 0,
-    ativos: 0,
-    inativos: 0,
-    treinamento: 0
-  })
-
-  // Carregar dados dos colaboradores
-  const carregarColaboradores = async () => {
+  // Carregar clientes
+  const carregarClientes = async () => {
     try {
-      setLoading(true)
-      setError(null)
-
-      const response = await colaboradorService.listarColaboradores({
-        search: searchTerm || undefined,
-        status: statusFilter !== "todos" ? statusFilter : undefined,
-        limit: 100 // Carregar mais colaboradores para demonstração
+      setLoadingClientes(true)
+      const response = await clienteService.listarClientes({
+        search: searchCliente || undefined,
+        limit: 100
       })
-
-      setColaboradores(response.data.colaboradores)
+      setClientes(response.data.clientes)
     } catch (err) {
-      console.error('Erro ao carregar colaboradores:', err)
-      setError('Erro ao carregar colaboradores. Verifique sua conexão.')
+      console.error('Erro ao carregar clientes:', err)
+      showError('Erro ao carregar clientes. Verifique sua conexão.')
     } finally {
-      setLoading(false)
+      setLoadingClientes(false)
     }
   }
 
-  // Carregar estatísticas
-  const carregarEstatisticas = async () => {
+  // Carregar colaboradores do cliente selecionado
+  const carregarColaboradores = async () => {
+    if (!clienteSelecionado) {
+      setColaboradores([])
+      return
+    }
+
     try {
-      const response = await colaboradorService.obterEstatisticas()
-      setStats(response.data)
+      setLoadingColaboradores(true)
+
+      // Carregar colaboradores do cliente
+      const response = await colaboradorService.listarColaboradoresDoCliente(clienteSelecionado.id)
+      setColaboradores(response.data.colaboradores || [])
     } catch (err) {
-      console.error('Erro ao carregar estatísticas:', err)
+      console.error('Erro ao carregar colaboradores:', err)
+      showError('Erro ao carregar colaboradores. Verifique sua conexão.')
+    } finally {
+      setLoadingColaboradores(false)
     }
   }
 
   // Carregar dados quando o componente monta
   useEffect(() => {
-    carregarColaboradores()
-    carregarEstatisticas()
+    carregarClientes()
   }, [])
 
-  // Recarregar quando filtros mudam
+  // Recarregar clientes quando busca muda
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      carregarColaboradores()
-    }, 500) // Debounce de 500ms
-
+      carregarClientes()
+    }, 500)
     return () => clearTimeout(timeoutId)
-  }, [searchTerm, statusFilter])
+  }, [searchCliente])
 
-  // Filtrar colaboradores localmente (já vem filtrado da API, mas mantemos para consistência)
-  const colaboradoresFiltrados = colaboradores.filter(colaborador => {
-    const matchesSearch = colaborador.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      colaborador.cargo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      colaborador.departamento.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      colaborador.email.toLowerCase().includes(searchTerm.toLowerCase())
+  // Carregar colaboradores quando cliente é selecionado
+  useEffect(() => {
+    carregarColaboradores()
+  }, [clienteSelecionado])
 
-    const matchesStatus = statusFilter === "todos" || colaborador.status === statusFilter
-
-    return matchesSearch && matchesStatus
+  // Filtrar clientes localmente
+  const clientesFiltrados = clientes.filter(cliente => {
+    const matchesSearch = cliente.nome.toLowerCase().includes(searchCliente.toLowerCase()) ||
+      cliente.empresa.toLowerCase().includes(searchCliente.toLowerCase()) ||
+      cliente.email.toLowerCase().includes(searchCliente.toLowerCase())
+    return matchesSearch
   })
+
+  // Filtrar colaboradores localmente
+  const colaboradoresFiltrados = colaboradores.filter(colaborador => {
+    const matchesSearch = colaborador.nome.toLowerCase().includes(searchColaborador.toLowerCase()) ||
+      colaborador.cargo.toLowerCase().includes(searchColaborador.toLowerCase()) ||
+      colaborador.departamento.toLowerCase().includes(searchColaborador.toLowerCase())
+    return matchesSearch
+  })
+
+  // Remover colaborador do cliente (excluir relacionamento)
+  const handleRemoverColaborador = async (colaborador: Colaborador) => {
+    if (!clienteSelecionado) return
+
+    try {
+      await colaboradorService.removerColaboradorDoCliente(clienteSelecionado.id, colaborador.id)
+      showSuccess(`Colaborador ${colaborador.nome} removido do cliente ${clienteSelecionado.nome} com sucesso!`)
+      await carregarColaboradores()
+    } catch (err) {
+      console.error('Erro ao remover colaborador:', err)
+      showError('Erro ao remover colaborador. Tente novamente.')
+    }
+  }
+
+  // Funções de CRUD de colaboradores
+  const handleSaveColaborador = async (novoColaborador: ColaboradorFormData) => {
+    if (!clienteSelecionado) {
+      showWarning('Por favor, selecione um cliente antes de cadastrar um colaborador.')
+      return
+    }
+
+    try {
+      const dadosParaEnvio: ColaboradorCreateData & { clienteId?: string } = {
+        nome: novoColaborador.nome,
+        email: novoColaborador.email,
+        telefone: novoColaborador.telefone,
+        cargo: novoColaborador.cargo,
+        departamento: novoColaborador.departamento,
+        status: novoColaborador.status || 'treinamento',
+        salario: novoColaborador.salario ? Number(novoColaborador.salario.toString().replace(/[^\d,.-]/g, '').replace(',', '.')) : undefined,
+        dataContratacao: novoColaborador.dataContratacao,
+        dataDemissao: novoColaborador.dataDemissao,
+        endereco: novoColaborador.endereco,
+        cidade: novoColaborador.cidade,
+        estado: novoColaborador.estado,
+        cep: novoColaborador.cep,
+        cpf: novoColaborador.cpf,
+        rg: novoColaborador.rg,
+        dataNascimento: novoColaborador.dataNascimento,
+        observacoes: novoColaborador.observacoes,
+        supervisorId: novoColaborador.supervisorId,
+        clienteId: clienteSelecionado.id // Incluir clienteId para atribuição automática
+      }
+
+      await colaboradorService.criarColaborador(dadosParaEnvio)
+      showSuccess(`Colaborador ${novoColaborador.nome} cadastrado e atribuído ao cliente ${clienteSelecionado.nome} com sucesso!`)
+      setIsModalOpen(false)
+
+      // Recarregar colaboradores
+      await carregarColaboradores()
+    } catch (err) {
+      console.error('Erro ao salvar colaborador:', err)
+      showError('Erro ao cadastrar colaborador. Tente novamente.')
+    }
+  }
+
+  const handleVerDetalhes = (colaborador: Colaborador) => {
+    setColaboradorSelecionado(colaborador)
+    setIsDetalhesModalOpen(true)
+  }
+
+  const handleEditarColaborador = (colaborador: Colaborador) => {
+    setColaboradorSelecionado(colaborador)
+    setIsEditarModalOpen(true)
+  }
+
+  const handleSalvarEdicao = async (colaboradorAtualizado: Colaborador) => {
+    try {
+      const dadosParaEnvio = {
+        id: colaboradorAtualizado.id,
+        nome: colaboradorAtualizado.nome,
+        email: colaboradorAtualizado.email,
+        telefone: colaboradorAtualizado.telefone,
+        cargo: colaboradorAtualizado.cargo,
+        departamento: colaboradorAtualizado.departamento,
+        status: colaboradorAtualizado.status,
+        salario: colaboradorAtualizado.salario || undefined,
+        dataContratacao: colaboradorAtualizado.dataContratacao,
+        dataDemissao: colaboradorAtualizado.dataDemissao || undefined,
+        endereco: colaboradorAtualizado.endereco || undefined,
+        cidade: colaboradorAtualizado.cidade || undefined,
+        estado: colaboradorAtualizado.estado || undefined,
+        cep: colaboradorAtualizado.cep || undefined,
+        cpf: colaboradorAtualizado.cpf || undefined,
+        rg: colaboradorAtualizado.rg || undefined,
+        dataNascimento: colaboradorAtualizado.dataNascimento || undefined,
+        observacoes: colaboradorAtualizado.observacoes || undefined,
+        supervisorId: colaboradorAtualizado.supervisorId || undefined
+      }
+
+      await colaboradorService.atualizarColaborador(dadosParaEnvio)
+      showSuccess(`Colaborador ${colaboradorAtualizado.nome} atualizado com sucesso!`)
+      setIsEditarModalOpen(false)
+
+      // Recarregar colaboradores se houver cliente selecionado
+      if (clienteSelecionado) {
+        await carregarColaboradores()
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar colaborador:', err)
+      showError('Erro ao atualizar colaborador. Tente novamente.')
+    }
+  }
+
+  const handleExcluirColaborador = (colaborador: Colaborador) => {
+    setColaboradorParaExcluir(colaborador)
+    setIsConfirmModalOpen(true)
+  }
+
+  const confirmarExclusao = async () => {
+    if (!colaboradorParaExcluir || !clienteSelecionado) return
+
+    try {
+      // Remover colaborador do cliente (não deletar o colaborador, apenas o relacionamento)
+      await colaboradorService.removerColaboradorDoCliente(clienteSelecionado.id, colaboradorParaExcluir.id)
+      showSuccess(`Colaborador ${colaboradorParaExcluir.nome} removido do cliente ${clienteSelecionado.nome} com sucesso!`)
+      setColaboradorParaExcluir(null)
+
+      // Recarregar colaboradores
+      await carregarColaboradores()
+    } catch (err) {
+      console.error('Erro ao remover colaborador:', err)
+      if (err instanceof Error && err.message.includes('não encontrado')) {
+        showWarning('Este colaborador já foi removido ou não existe mais.')
+        await carregarColaboradores()
+      } else {
+        showError('Erro ao remover colaborador. Tente novamente.')
+      }
+      setColaboradorParaExcluir(null)
+    }
+  }
 
   const getStatusClass = (status: string) => {
     switch (status) {
@@ -199,289 +352,137 @@ const CadastroColaborador: React.FC = () => {
     }
   }
 
-  const handleSaveColaborador = async (novoColaborador: ColaboradorFormData) => {
-    try {
-      // Converter dados do formulário para o formato esperado pela API
-      const dadosParaEnvio: ColaboradorCreateData = {
-        nome: novoColaborador.nome,
-        email: novoColaborador.email,
-        telefone: novoColaborador.telefone,
-        cargo: novoColaborador.cargo,
-        departamento: novoColaborador.departamento,
-        status: novoColaborador.status || 'treinamento',
-        salario: novoColaborador.salario ? Number(novoColaborador.salario.toString().replace(/[^\d,.-]/g, '').replace(',', '.')) : undefined,
-        dataContratacao: novoColaborador.dataContratacao,
-        dataDemissao: novoColaborador.dataDemissao,
-        endereco: novoColaborador.endereco,
-        cidade: novoColaborador.cidade,
-        estado: novoColaborador.estado,
-        cep: novoColaborador.cep,
-        cpf: novoColaborador.cpf,
-        rg: novoColaborador.rg,
-        dataNascimento: novoColaborador.dataNascimento,
-        observacoes: novoColaborador.observacoes,
-        supervisorId: novoColaborador.supervisorId
-      }
-
-      console.log('Dados sendo enviados para criação:', dadosParaEnvio)
-
-      await colaboradorService.criarColaborador(dadosParaEnvio)
-
-      // Recarregar lista de colaboradores e estatísticas
-      await carregarColaboradores()
-      await carregarEstatisticas()
-
-      showSuccess(`Colaborador ${novoColaborador.nome} cadastrado com sucesso!`)
-      setIsModalOpen(false)
-    } catch (err) {
-      console.error('Erro ao salvar colaborador:', err)
-      showError('Erro ao cadastrar colaborador. Tente novamente.')
-    }
-  }
-
-  const handleVerDetalhes = (colaborador: Colaborador) => {
-    setColaboradorSelecionado(colaborador)
-    setIsDetalhesModalOpen(true)
-  }
-
-  const handleEditarColaborador = (colaborador: Colaborador) => {
-    setColaboradorSelecionado(colaborador)
-    setIsEditarModalOpen(true)
-  }
-
-  const handleSalvarEdicao = async (colaboradorAtualizado: Colaborador) => {
-    try {
-      // Preparar dados para envio, removendo campos vazios
-      const dadosParaEnvio = {
-        id: colaboradorAtualizado.id,
-        nome: colaboradorAtualizado.nome,
-        email: colaboradorAtualizado.email,
-        telefone: colaboradorAtualizado.telefone,
-        cargo: colaboradorAtualizado.cargo,
-        departamento: colaboradorAtualizado.departamento,
-        status: colaboradorAtualizado.status,
-        salario: colaboradorAtualizado.salario || undefined,
-        dataContratacao: colaboradorAtualizado.dataContratacao,
-        dataDemissao: colaboradorAtualizado.dataDemissao || undefined,
-        endereco: colaboradorAtualizado.endereco || undefined,
-        cidade: colaboradorAtualizado.cidade || undefined,
-        estado: colaboradorAtualizado.estado || undefined,
-        cep: colaboradorAtualizado.cep || undefined,
-        cpf: colaboradorAtualizado.cpf || undefined,
-        rg: colaboradorAtualizado.rg || undefined,
-        dataNascimento: colaboradorAtualizado.dataNascimento || undefined,
-        observacoes: colaboradorAtualizado.observacoes || undefined,
-        supervisorId: colaboradorAtualizado.supervisorId || undefined
-      }
-
-      console.log('Dados sendo enviados para atualização:', dadosParaEnvio)
-
-      await colaboradorService.atualizarColaborador(dadosParaEnvio)
-
-      // Recarregar lista de colaboradores e estatísticas
-      await carregarColaboradores()
-      await carregarEstatisticas()
-
-      showSuccess(`Colaborador ${colaboradorAtualizado.nome} atualizado com sucesso!`)
-      setIsEditarModalOpen(false)
-    } catch (err) {
-      console.error('Erro ao atualizar colaborador:', err)
-      showError('Erro ao atualizar colaborador. Tente novamente.')
-    }
-  }
-
-  const handleExcluirColaborador = (colaborador: Colaborador) => {
-    setColaboradorParaExcluir(colaborador)
-    setIsConfirmModalOpen(true)
-  }
-
-  const confirmarExclusao = async () => {
-    if (!colaboradorParaExcluir) return
-
-    try {
-      await colaboradorService.deletarColaborador(colaboradorParaExcluir.id)
-
-      // Recarregar lista de colaboradores e estatísticas
-      await carregarColaboradores()
-      await carregarEstatisticas()
-
-      showSuccess(`Colaborador ${colaboradorParaExcluir.nome} excluído com sucesso!`)
-      setColaboradorParaExcluir(null)
-    } catch (err) {
-      console.error('Erro ao excluir colaborador:', err)
-      if (err instanceof Error && err.message.includes('não encontrado')) {
-        showWarning('Este colaborador já foi excluído ou não existe mais. A lista será atualizada.')
-        await carregarColaboradores()
-      } else {
-        showError('Erro ao excluir colaborador. Tente novamente.')
-      }
-      setColaboradorParaExcluir(null)
-    }
-  }
-
   return (
     <div className="dashboard-content">
       <div className="dashboard-welcome">
-        <h2>Lista de Colaboradores, {userName}!</h2>
-        <p>Visualize e gerencie todos os colaboradores cadastrados</p>
+        <h2>CADASTRO • COLABORADOR</h2>
+        <p>Selecione um cliente para gerenciar seus colaboradores</p>
       </div>
 
-      {/* Estatísticas */}
-      <div className="dashboard-grid">
-        <div className="card card-elevated">
-          <div className="stats-content">
-            <h3>TOTAL DE COLABORADORES</h3>
-            <p className="stats-number">{stats.total}</p>
-            <span className="stats-change positive">+{stats.ativos} ativos</span>
+      {/* Layout de dois painéis */}
+      <div className="colaborador-two-panel-layout">
+        {/* Painel Esquerdo - Lista de Clientes */}
+        <div className="colaborador-left-panel">
+          <div className="panel-header">
+            <h3>Procurar Cliente</h3>
           </div>
-        </div>
-
-        <div className="card card-elevated">
-          <div className="stats-content">
-            <h3>COLABORADORES ATIVOS</h3>
-            <p className="stats-number">{stats.ativos}</p>
-            <span className="stats-change positive">Ativos no sistema</span>
-          </div>
-        </div>
-
-        <div className="card card-elevated">
-          <div className="stats-content">
-            <h3>EM TREINAMENTO</h3>
-            <p className="stats-number">{stats.treinamento}</p>
-            <span className="stats-change warning">Aguardando conclusão</span>
-          </div>
-        </div>
-
-        <div className="card card-elevated">
-          <div className="stats-content">
-            <h3>INATIVOS</h3>
-            <p className="stats-number">{stats.inativos}</p>
-            <span className="stats-change negative">Colaboradores inativos</span>
-          </div>
-        </div>
-      </div>
-
-      {/* Filtros e Busca */}
-      <div className="card card-elevated">
-        <div className="filters-section">
-          <div className="search-container">
+          <div className="panel-search">
             <input
               type="text"
-              placeholder="Buscar por nome, cargo, departamento ou email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Procurar Cliente"
+              value={searchCliente}
+              onChange={(e) => setSearchCliente(e.target.value)}
               className="search-input"
             />
           </div>
-          <div className="filter-container">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="filter-select"
-            >
-              <option value="todos">Todos os Status</option>
-              <option value="ativo">Ativos</option>
-              <option value="treinamento">Em Treinamento</option>
-              <option value="inativo">Inativos</option>
-            </select>
+          <div className="panel-list">
+            {loadingClientes ? (
+              <div className="loading-state">
+                <p>Carregando clientes...</p>
+              </div>
+            ) : clientesFiltrados.length === 0 ? (
+              <div className="no-results">
+                <p>Nenhum cliente encontrado.</p>
+              </div>
+            ) : (
+              clientesFiltrados.map((cliente) => (
+                <div
+                  key={cliente.id}
+                  className={`cliente-list-item ${clienteSelecionado?.id === cliente.id ? 'selected' : ''}`}
+                  onClick={() => setClienteSelecionado(cliente)}
+                >
+                  <div className="cliente-list-item-content">
+                    <div className="cliente-list-item-name">{cliente.nome}</div>
+                    <div className="cliente-list-item-abbr">{cliente.empresa.substring(0, 2).toUpperCase()}</div>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         </div>
-      </div>
 
-      {/* Lista de Colaboradores */}
-      <div className="colaboradores-list-container">
-        <div className="add-colaborador-section">
-          <h2>Colaboradores Cadastrados ({colaboradoresFiltrados.length})</h2>
-          <button
-            className="btn-add-colaborador"
-            onClick={() => setIsModalOpen(true)}
-          >
-            Adicionar Colaborador
-          </button>
-        </div>
-        <div className="colaboradores-list">
-          {loading ? (
-            <div className="loading-state">
-              <p>Carregando colaboradores...</p>
-            </div>
-          ) : error ? (
-            <div className="error-state">
-              <p>{error}</p>
-              <button onClick={carregarColaboradores} className="btn btn-primary">
-                Tentar Novamente
+        {/* Painel Direito - Lista de Colaboradores */}
+        <div className="colaborador-right-panel">
+          <div className="panel-header">
+            <h3>Procurar Colaborador</h3>
+            <div className="panel-header-actions">
+              <button
+                className="btn-icon"
+                onClick={() => {
+                  if (!clienteSelecionado) {
+                    showWarning('Por favor, selecione um cliente antes de cadastrar um colaborador.')
+                    return
+                  }
+                  setIsModalOpen(true)
+                }}
+                title="Novo Colaborador"
+                disabled={!clienteSelecionado}
+              >
+                ➕
               </button>
             </div>
-          ) : colaboradoresFiltrados.length === 0 ? (
-            <div className="no-results">
-              <p>Nenhum colaborador encontrado com os filtros aplicados.</p>
-            </div>
-          ) : (
-            colaboradoresFiltrados.map((colaborador) => (
-              <div key={colaborador.id} className="colaborador-item">
-                <div className="colaborador-info">
-                  <div className="colaborador-header">
-                    <h3>{colaborador.nome}</h3>
-                    <span className={`status-badge ${getStatusClass(colaborador.status)}`}>
-                      {getStatusText(colaborador.status)}
-                    </span>
-                  </div>
-                  <div className="colaborador-details">
-                    <div className="detail-group">
-                      <span className="detail-label">Cargo:</span>
-                      <span className="detail-value">{colaborador.cargo}</span>
-                    </div>
-                    <div className="detail-group">
-                      <span className="detail-label">Departamento:</span>
-                      <span className="detail-value">{colaborador.departamento}</span>
-                    </div>
-                    <div className="detail-group">
-                      <span className="detail-label">Email:</span>
-                      <span className="detail-value">{colaborador.email}</span>
-                    </div>
-                    <div className="detail-group">
-                      <span className="detail-label">Telefone:</span>
-                      <span className="detail-value">{colaborador.telefone}</span>
-                    </div>
-                    <div className="detail-group">
-                      <span className="detail-label">Salário:</span>
-                      <span className="detail-value">
-                        {formatSalarioDisplay(colaborador.salario)}
-                      </span>
-                    </div>
-                    <div className="detail-group">
-                      <span className="detail-label">Contratado em:</span>
-                      <span className="detail-value">{new Date(colaborador.dataContratacao).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                    <div className="detail-group">
-                      <span className="detail-label">Última atualização:</span>
-                      <span className="detail-value">{new Date(colaborador.ultimaAtualizacao).toLocaleDateString('pt-BR')}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="colaborador-actions">
-                  <button
-                    className="btn btn-primary"
-                    onClick={() => handleEditarColaborador(colaborador)}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => handleVerDetalhes(colaborador)}
-                  >
-                    Ver Detalhes
-                  </button>
-                  <button
-                    className="btn btn-danger"
-                    onClick={() => handleExcluirColaborador(colaborador)}
-                    style={{ background: '#ff4757', color: '#fff' }}
-                  >
-                    Excluir
-                  </button>
-                </div>
+          </div>
+          <div className="panel-search">
+            <input
+              type="text"
+              placeholder="Procurar Colaborador"
+              value={searchColaborador}
+              onChange={(e) => setSearchColaborador(e.target.value)}
+              className="search-input"
+            />
+          </div>
+          <div className="panel-list">
+            {!clienteSelecionado ? (
+              <div className="no-results">
+                <p>Selecione um cliente para visualizar seus colaboradores</p>
               </div>
-            ))
-          )}
+            ) : loadingColaboradores ? (
+              <div className="loading-state">
+                <p>Carregando colaboradores...</p>
+              </div>
+            ) : (
+              <>
+                {/* Lista de Colaboradores do Cliente */}
+                {colaboradoresFiltrados.length > 0 ? (
+                  <div className="colaboradores-section">
+                    <h4 className="section-title">Colaboradores ({colaboradoresFiltrados.length})</h4>
+                    {colaboradoresFiltrados.map((colaborador, index) => (
+                      <div key={colaborador.id} className="colaborador-list-item">
+                        <div className="colaborador-list-item-number">{index + 1}</div>
+                        <div className="colaborador-list-item-info">
+                          <div className="colaborador-list-item-name">{colaborador.nome}</div>
+                          <div className="colaborador-list-item-details">
+                            <span>Colab. Tipo: {colaborador.cargo}</span>
+                            <span>Periférico: {colaborador.id.substring(0, 7)}</span>
+                          </div>
+                        </div>
+                        <div className="colaborador-list-item-actions">
+                          <button
+                            className="btn-icon"
+                            onClick={() => handleEditarColaborador(colaborador)}
+                            title="Editar colaborador"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            className="btn-icon-danger"
+                            onClick={() => handleRemoverColaborador(colaborador)}
+                            title="Remover colaborador"
+                          >
+                            🗑️
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="no-results">
+                    <p>Nenhum colaborador cadastrado para este cliente.</p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -512,9 +513,9 @@ const CadastroColaborador: React.FC = () => {
           setColaboradorParaExcluir(null)
         }}
         onConfirm={confirmarExclusao}
-        title="Confirmar Exclusão"
-        message={`Tem certeza que deseja excluir o colaborador "${colaboradorParaExcluir?.nome}"? Esta ação não pode ser desfeita.`}
-        confirmText="Confirmar Exclusão"
+        title="Confirmar Remoção"
+        message={`Tem certeza que deseja remover o colaborador "${colaboradorParaExcluir?.nome}" do cliente "${clienteSelecionado?.nome}"? Esta ação não pode ser desfeita.`}
+        confirmText="Confirmar Remoção"
         cancelText="Cancelar"
         type="danger"
       />
