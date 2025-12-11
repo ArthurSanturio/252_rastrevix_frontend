@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import {
@@ -10,7 +10,10 @@ import {
   Users,
   Settings,
   HelpCircle,
-  ChevronDown
+  ChevronDown,
+  ShoppingCart,
+  Cpu,
+  Building
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -23,7 +26,8 @@ interface SidebarProps {
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggleCollapse }) => {
   const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
-  const [isCadastroOpen, setIsCadastroOpen] = useState(false);
+  const [isCadastroOpen, setIsCadastroOpen] = useState(location.pathname.startsWith('/cadastro'));
+  const [isEstoqueOpen, setIsEstoqueOpen] = useState(location.pathname.startsWith('/estoque'));
 
   const handleLogout = () => {
     logout();
@@ -33,6 +37,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
   const toggleCadastro = () => {
     setIsCadastroOpen(!isCadastroOpen);
   };
+
+  const toggleEstoque = () => {
+    setIsEstoqueOpen(!isEstoqueOpen);
+  };
+
+  // Abrir menu automaticamente quando estiver na rota correspondente
+  useEffect(() => {
+    setIsCadastroOpen(location.pathname.startsWith('/cadastro'));
+    setIsEstoqueOpen(location.pathname.startsWith('/estoque'));
+  }, [location.pathname]);
 
   const getIcon = (iconName: string, size: number = 20) => {
     const iconProps = { size, className: "sidebar-icon" };
@@ -54,6 +68,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
         return <Settings {...iconProps} />;
       case 'help':
         return <HelpCircle {...iconProps} />;
+      case 'shopping-cart':
+        return <ShoppingCart {...iconProps} />;
+      case 'cpu':
+        return <Cpu {...iconProps} />;
+      case 'building':
+        return <Building {...iconProps} />;
       default:
         return <div className="sidebar-icon" style={{ width: size, height: size }}></div>;
     }
@@ -96,6 +116,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
           name: 'Colaborador',
           path: '/cadastro/colaborador',
           icon: 'users'
+        }
+      ]
+    },
+    {
+      name: 'Estoque',
+      icon: 'shopping-cart',
+      protected: true,
+      submenu: [
+        {
+          name: 'Chip GSM',
+          path: '/estoque/chip-gsm',
+          icon: 'cpu'
+        },
+        {
+          name: 'Equipamento',
+          path: '/estoque/equipamento',
+          icon: 'cog'
+        },
+        {
+          name: 'Forn. Chip GSM',
+          path: '/estoque/fornecedor-chip-gsm',
+          icon: 'building'
         }
       ]
     },
@@ -157,15 +199,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
                   <div className="sidebar-submenu">
                     <div
                       className="sidebar-link sidebar-submenu-header"
-                      onClick={toggleCadastro}
+                      onClick={item.name === 'Cadastro' ? toggleCadastro : item.name === 'Estoque' ? toggleEstoque : undefined}
                       style={{ cursor: 'pointer' }}
                       title={isCollapsed ? item.name : undefined}
                     >
                       {getIcon(item.icon)}
                       {!isCollapsed && <span className="sidebar-text">{item.name}</span>}
-                      {!isCollapsed && <ChevronDown size={16} className={`sidebar-arrow ${isCadastroOpen ? 'open' : ''}`} />}
+                      {!isCollapsed && <ChevronDown size={16} className={`sidebar-arrow ${(item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen) ? 'open' : ''}`} />}
                     </div>
-                    {isCadastroOpen && (
+                    {((item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen)) && (
                       <ul className="sidebar-submenu-list">
                         {item.submenu.map((subItem) => (
                           <li key={subItem.path} className="sidebar-subitem">

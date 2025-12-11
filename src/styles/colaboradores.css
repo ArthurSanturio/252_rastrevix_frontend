@@ -429,6 +429,9 @@
   font-size: 1rem;
   transition: all 0.2s ease;
   color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-icon:hover {
@@ -452,6 +455,9 @@
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: var(--error);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-icon-danger:hover {

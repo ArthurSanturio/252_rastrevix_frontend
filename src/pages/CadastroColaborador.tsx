@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import { Pencil, Trash2 } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
 import ColaboradorModal from "../components/ColaboradorModal"
 import ColaboradorDetalhesModal from "../components/ColaboradorDetalhesModal"
@@ -462,14 +463,14 @@ const CadastroColaborador: React.FC = () => {
                             onClick={() => handleEditarColaborador(colaborador)}
                             title="Editar colaborador"
                           >
-                            ✏️
+                            <Pencil size={18} />
                           </button>
                           <button
                             className="btn-icon-danger"
                             onClick={() => handleRemoverColaborador(colaborador)}
                             title="Remover colaborador"
                           >
-                            🗑️
+                            <Trash2 size={18} />
                           </button>
                         </div>
                       </div>

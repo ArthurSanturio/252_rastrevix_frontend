@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import { Pencil, Trash2 } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
 import { rastreadorService } from "../services/rastreadorService"
 import { showSuccess, showError, showWarning } from "../utils/toast"
@@ -544,14 +545,14 @@ const CadastroRastreador: React.FC = () => {
                           onClick={() => handleEditar(rastreador)}
                           title="Editar"
                         >
-                          ✏️
+                          <Pencil size={18} />
                         </button>
                         <button
                           className="btn-icon btn-danger"
                           onClick={() => handleExcluir(rastreador)}
                           title="Excluir"
                         >
-                          🗑️
+                          <Trash2 size={18} />
                         </button>
                       </div>
                     </td>
@@ -583,7 +584,7 @@ const CadastroRastreador: React.FC = () => {
         <div className="modal-overlay" onClick={() => setIsEditarModalOpen(false)}>
           <div className="modal-content modal-large" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
-              <h2>✏️ Editar Rastreador</h2>
+              <h2><Pencil size={20} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '8px' }} /> Editar Rastreador</h2>
               <button className="modal-close" onClick={() => setIsEditarModalOpen(false)}>×</button>
             </div>
             <div className="modal-body">

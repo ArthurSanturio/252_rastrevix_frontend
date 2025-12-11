@@ -11,6 +11,9 @@ import CadastroCliente from "../pages/CadastroCliente"
 import CadastroMaquina from "../pages/CadastroMaquina"
 import CadastroColaborador from "../pages/CadastroColaborador"
 import CadastroRastreador from "../pages/CadastroRastreador"
+import EstoqueChipGSM from "../pages/EstoqueChipGSM"
+import EstoqueEquipamento from "../pages/EstoqueEquipamento"
+import EstoqueFornecedorChipGSM from "../pages/EstoqueFornecedorChipGSM"
 import Perfil from "../pages/Perfil"
 import Configuracoes from "../pages/Configuracoes"
 import Layout from "../components/Layout"
@@ -38,6 +41,9 @@ const AppRouter: React.FC = () => {
             <Route path="/cadastro/maquina" element={<CadastroMaquina />} />
             <Route path="/cadastro/colaborador" element={<CadastroColaborador />} />
             <Route path="/cadastro/rastreador" element={<CadastroRastreador />} />
+            <Route path="/estoque/chip-gsm" element={<EstoqueChipGSM />} />
+            <Route path="/estoque/equipamento" element={<EstoqueEquipamento />} />
+            <Route path="/estoque/fornecedor-chip-gsm" element={<EstoqueFornecedorChipGSM />} />
             <Route path="/profile" element={<Perfil />} />
             <Route path="/settings" element={<Configuracoes />} />
             {/* Add other protected routes here as needed */}

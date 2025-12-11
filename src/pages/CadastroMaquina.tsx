@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
+import { Trash2 } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
 import { maquinaService } from "../services/maquinaService"
 import { clienteService, type Cliente } from "../services/clienteService"
@@ -382,7 +383,7 @@ const CadastroMaquina: React.FC = () => {
                                 onClick={() => handleExcluir(maquina)}
                                 title="Excluir"
                               >
-                                🗑️
+                                <Trash2 size={18} />
                               </button>
                             </div>
                           </td>

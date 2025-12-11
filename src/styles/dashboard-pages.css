@@ -1042,7 +1042,8 @@
 }
 
 .modal-form input,
-.modal-form select {
+.modal-form select,
+.modal-form textarea {
   width: 100%;
   background: var(--surface-elevated);
   border: 1px solid var(--border);
@@ -1052,10 +1053,17 @@
   font-size: 1rem;
   transition: all 0.2s ease;
   box-sizing: border-box;
+  font-family: inherit;
+}
+
+.modal-form textarea {
+  resize: vertical;
+  min-height: 100px;
 }
 
 .modal-form input:focus,
-.modal-form select:focus {
+.modal-form select:focus,
+.modal-form textarea:focus {
   outline: none;
   border-color: var(--accent-primary);
   box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
@@ -1081,14 +1089,52 @@
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
-  padding-top: 1rem;
+  padding: 1.5rem;
   border-top: 1px solid var(--border);
 }
 
 .modal-actions .btn {
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 2rem;
   font-weight: 600;
-  min-width: 120px;
+  min-width: 140px;
+  border-radius: var(--radius);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-actions .btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.modal-actions .btn-danger:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.modal-actions .btn-primary {
+  background: #10b981;
+  color: white;
+}
+
+.modal-actions .btn-primary:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.modal-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Botão de adicionar cliente */
@@ -1604,6 +1650,9 @@
   font-size: 1.25rem;
   padding: 0.25rem;
   transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-icon:hover {
