@@ -1861,6 +1861,47 @@
   color: var(--text-muted);
 }
 
+.input-with-icon {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-with-icon .input-icon {
+  position: absolute;
+  left: 0.75rem;
+  font-size: 1rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.input-with-icon input,
+.input-with-icon textarea {
+  padding-left: 2.5rem;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.input-with-icon input:focus,
+.input-with-icon textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+}
+
+.input-with-icon textarea {
+  padding-top: 0.75rem;
+  min-height: 100px;
+  resize: vertical;
+  font-family: inherit;
+}
+
 /* Responsividade */
 @media (max-width: 1024px) {
   .maquina-veiculo-container {

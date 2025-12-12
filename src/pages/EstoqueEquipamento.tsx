@@ -2,8 +2,13 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Search, Plus, Download, Trash2 } from "lucide-react"
+import { Search, Plus, Download, Trash2, Pencil } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
+import { rastreadorService } from "../services/rastreadorService"
+import { showSuccess, showError } from "../utils/toast"
+import type { Rastreador } from "../types"
+import RastreadorEditarModal from "../components/RastreadorEditarModal"
+import RastreadorCriarModal from "../components/RastreadorCriarModal"
 import "../styles/dashboard-pages.css"
 import "../styles/estoque.css"
 
@@ -17,6 +22,32 @@ interface Equipamento {
   veiculoInstalado?: string;
   dataInstalacao?: string;
   fornecedor: string;
+  rastreador?: Rastreador; // Referência ao rastreador original
+}
+
+// Função para mapear Rastreador para Equipamento
+const mapRastreadorToEquipamento = (rastreador: Rastreador): Equipamento => {
+  // Mapear status do rastreador para status do equipamento
+  const statusMap: Record<string, 'disponivel' | 'instalado' | 'manutencao' | 'inativo'> = {
+    'ativo': 'instalado',
+    'inativo': 'inativo',
+    'manutencao': 'manutencao',
+    'bloqueado': 'inativo'
+  }
+
+  return {
+    id: rastreador.id,
+    numeroSerie: rastreador.numeroSerial,
+    modelo: rastreador.modelo || 'N/A',
+    fabricante: rastreador.fabricante || 'N/A',
+    status: statusMap[rastreador.status] || 'inativo',
+    veiculoInstalado: rastreador.placa && rastreador.nome
+      ? `${rastreador.nome} - ${rastreador.placa}`
+      : rastreador.placa || rastreador.nome || undefined,
+    dataInstalacao: rastreador.dataCadastro ? new Date(rastreador.dataCadastro).toISOString().split('T')[0] : undefined,
+    fornecedor: rastreador.fabricante || 'N/A',
+    rastreador: rastreador
+  }
 }
 
 const EstoqueEquipamento: React.FC = () => {
@@ -24,25 +55,29 @@ const EstoqueEquipamento: React.FC = () => {
   const [equipamentos, setEquipamentos] = useState<Equipamento[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [isEditarModalOpen, setIsEditarModalOpen] = useState(false)
+  const [isCriarModalOpen, setIsCriarModalOpen] = useState(false)
+  const [rastreadorSelecionado, setRastreadorSelecionado] = useState<Rastreador | null>(null)
+
+  const carregarEquipamentos = async () => {
+    try {
+      setIsLoading(true)
+      const response = await rastreadorService.listarRastreadores({
+        limit: 1000
+      })
+
+      const equipamentosMapeados = response.data.rastreadores.map(mapRastreadorToEquipamento)
+      setEquipamentos(equipamentosMapeados)
+    } catch (err) {
+      console.error('Erro ao carregar equipamentos:', err)
+      showError('Erro ao carregar equipamentos. Verifique sua conexão.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    // Simular carregamento de dados
-    setTimeout(() => {
-      setEquipamentos([
-        {
-          id: "1",
-          numeroSerie: "357073298627072",
-          modelo: "Modelo A",
-          fabricante: "Fabricante X",
-          status: "instalado",
-          cliente: "BRENO RESSARI NICOLINI",
-          veiculoInstalado: "FIAT DUCATO - ODG6109",
-          dataInstalacao: "2024-01-15",
-          fornecedor: "Fornecedor A"
-        }
-      ])
-      setIsLoading(false)
-    }, 500)
+    carregarEquipamentos()
   }, [])
 
   const filteredEquipamentos = equipamentos.filter(equip =>
@@ -53,16 +88,55 @@ const EstoqueEquipamento: React.FC = () => {
   )
 
   const handleNovo = () => {
-    console.log("Novo equipamento")
+    setIsCriarModalOpen(true)
+  }
+
+  const handleSalvarNovo = async (rastreadorData: Partial<Rastreador>) => {
+    try {
+      await rastreadorService.criarRastreador(rastreadorData)
+      showSuccess('Equipamento adicionado com sucesso!')
+      setIsCriarModalOpen(false)
+      await carregarEquipamentos()
+    } catch (err) {
+      console.error('Erro ao criar equipamento:', err)
+      showError('Erro ao criar equipamento. Tente novamente.')
+    }
   }
 
   const handleExportar = () => {
     console.log("Exportar dados")
   }
 
-  const handleExcluir = (equip: Equipamento) => {
+  const handleEditar = (equip: Equipamento) => {
+    if (equip.rastreador) {
+      setRastreadorSelecionado(equip.rastreador)
+      setIsEditarModalOpen(true)
+    }
+  }
+
+  const handleSalvarEdicao = async (rastreadorAtualizado: Rastreador) => {
+    try {
+      await rastreadorService.atualizarRastreador(rastreadorAtualizado.id, rastreadorAtualizado)
+      showSuccess('Equipamento atualizado com sucesso!')
+      setIsEditarModalOpen(false)
+      setRastreadorSelecionado(null)
+      await carregarEquipamentos()
+    } catch (err) {
+      console.error('Erro ao atualizar equipamento:', err)
+      showError('Erro ao atualizar equipamento. Tente novamente.')
+    }
+  }
+
+  const handleExcluir = async (equip: Equipamento) => {
     if (window.confirm(`Tem certeza que deseja excluir o equipamento ${equip.numeroSerie}?`)) {
-      setEquipamentos(equipamentos.filter(e => e.id !== equip.id))
+      try {
+        await rastreadorService.deletarRastreador(equip.id)
+        showSuccess('Equipamento excluído com sucesso!')
+        await carregarEquipamentos()
+      } catch (err) {
+        console.error('Erro ao excluir equipamento:', err)
+        showError('Erro ao excluir equipamento. Tente novamente.')
+      }
     }
   }
 
@@ -153,6 +227,14 @@ const EstoqueEquipamento: React.FC = () => {
                 </div>
                 <div className="estoque-item-actions">
                   <button
+                    className="btn-icon"
+                    onClick={() => handleEditar(equip)}
+                    title="Editar"
+                    style={{ marginRight: '8px' }}
+                  >
+                    <Pencil size={18} />
+                  </button>
+                  <button
                     className="btn-icon btn-icon-danger"
                     onClick={() => handleExcluir(equip)}
                     title="Excluir"
@@ -165,6 +247,22 @@ const EstoqueEquipamento: React.FC = () => {
           </div>
         )}
       </div>
+
+      <RastreadorEditarModal
+        isOpen={isEditarModalOpen}
+        onClose={() => {
+          setIsEditarModalOpen(false)
+          setRastreadorSelecionado(null)
+        }}
+        onSave={handleSalvarEdicao}
+        rastreador={rastreadorSelecionado}
+      />
+
+      <RastreadorCriarModal
+        isOpen={isCriarModalOpen}
+        onClose={() => setIsCriarModalOpen(false)}
+        onSave={handleSalvarNovo}
+      />
     </div>
   )
 }

@@ -4,68 +4,83 @@ import type React from "react"
 import { useState, useEffect } from "react"
 import { Search, Plus, Download, Trash2 } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
+import { fornecedorChipGsmService, type FornecedorChipGSM } from "../services/fornecedorChipGsmService"
+import { showSuccess, showError } from "../utils/toast"
+import FornecedorChipGSMModal from "../components/FornecedorChipGSMModal"
 import "../styles/dashboard-pages.css"
 import "../styles/estoque.css"
-
-interface FornecedorChipGSM {
-  id: string;
-  nome: string;
-  cnpj: string;
-  telefone: string;
-  email: string;
-  operadora: string;
-  status: 'ativo' | 'inativo';
-  endereco?: string;
-  cidade?: string;
-  estado?: string;
-}
 
 const EstoqueFornecedorChipGSM: React.FC = () => {
   const { user } = useAuth()
   const [fornecedores, setFornecedores] = useState<FornecedorChipGSM[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
+  const carregarFornecedores = async () => {
+    try {
+      setIsLoading(true)
+      const response = await fornecedorChipGsmService.listarFornecedores({
+        limit: 1000
+      })
+      setFornecedores(response.data.fornecedores)
+    } catch (err) {
+      console.error('Erro ao carregar fornecedores:', err)
+      showError('Erro ao carregar fornecedores. Verifique sua conexão.')
+      setFornecedores([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
-    // Simular carregamento de dados
-    setTimeout(() => {
-      setFornecedores([
-        {
-          id: "1",
-          nome: "ARQIA",
-          cnpj: "12.345.678/0001-90",
-          telefone: "(11) 3456-7890",
-          email: "contato@arqia.com.br",
-          operadora: "ARQIA",
-          status: "ativo",
-          endereco: "Rua Exemplo, 123",
-          cidade: "São Paulo",
-          estado: "SP"
-        }
-      ])
-      setIsLoading(false)
-    }, 500)
+    carregarFornecedores()
   }, [])
 
   const filteredFornecedores = fornecedores.filter(fornecedor =>
     fornecedor.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    fornecedor.cnpj.includes(searchTerm) ||
-    fornecedor.telefone.includes(searchTerm) ||
     fornecedor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    fornecedor.operadora.toLowerCase().includes(searchTerm.toLowerCase())
+    (fornecedor.telefone && fornecedor.telefone.includes(searchTerm)) ||
+    fornecedor.remetente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (fornecedor.observacoes && fornecedor.observacoes.toLowerCase().includes(searchTerm.toLowerCase()))
   )
 
   const handleNovo = () => {
-    console.log("Novo fornecedor")
+    setIsModalOpen(true)
+  }
+
+  const handleSalvarNovo = async (fornecedorData: { nome: string; email: string; telefone: string; remetente: string; observacoes: string }) => {
+    try {
+      await fornecedorChipGsmService.criarFornecedor({
+        nome: fornecedorData.nome,
+        email: fornecedorData.email,
+        telefone: fornecedorData.telefone || undefined,
+        remetente: fornecedorData.remetente,
+        observacoes: fornecedorData.observacoes || undefined
+      })
+      showSuccess('Fornecedor adicionado com sucesso!')
+      setIsModalOpen(false)
+      await carregarFornecedores()
+    } catch (err) {
+      console.error('Erro ao criar fornecedor:', err)
+      showError('Erro ao criar fornecedor. Tente novamente.')
+    }
   }
 
   const handleExportar = () => {
     console.log("Exportar dados")
   }
 
-  const handleExcluir = (fornecedor: FornecedorChipGSM) => {
+  const handleExcluir = async (fornecedor: FornecedorChipGSM) => {
     if (window.confirm(`Tem certeza que deseja excluir o fornecedor ${fornecedor.nome}?`)) {
-      setFornecedores(fornecedores.filter(f => f.id !== fornecedor.id))
+      try {
+        await fornecedorChipGsmService.excluirFornecedor(fornecedor.id)
+        showSuccess('Fornecedor excluído com sucesso!')
+        await carregarFornecedores()
+      } catch (err) {
+        console.error('Erro ao excluir fornecedor:', err)
+        showError('Erro ao excluir fornecedor. Tente novamente.')
+      }
     }
   }
 
@@ -117,39 +132,17 @@ const EstoqueFornecedorChipGSM: React.FC = () => {
                   </div>
                   <div className="estoque-item-details">
                     <div className="detail-row">
-                      <span className="detail-label">STATUS:</span>
-                      <span className={`status-badge status-${fornecedor.status}`}>
-                        {fornecedor.status.charAt(0).toUpperCase() + fornecedor.status.slice(1)}
-                      </span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">CNPJ:</span>
-                      <span className="detail-value">{fornecedor.cnpj}</span>
-                    </div>
-                    <div className="detail-row">
-                      <span className="detail-label">TELEFONE:</span>
-                      <span className="detail-value">{fornecedor.telefone}</span>
-                    </div>
-                    <div className="detail-row">
                       <span className="detail-label">EMAIL:</span>
                       <span className="detail-value">{fornecedor.email}</span>
                     </div>
                     <div className="detail-row">
-                      <span className="detail-label">OPERADORA:</span>
-                      <span className="detail-value">{fornecedor.operadora}</span>
+                      <span className="detail-label">TELEFONE:</span>
+                      <span className="detail-value">{fornecedor.telefone || '---'}</span>
                     </div>
-                    {fornecedor.endereco && (
-                      <div className="detail-row">
-                        <span className="detail-label">ENDEREÇO:</span>
-                        <span className="detail-value">{fornecedor.endereco}</span>
-                      </div>
-                    )}
-                    {fornecedor.cidade && fornecedor.estado && (
-                      <div className="detail-row">
-                        <span className="detail-label">CIDADE/ESTADO:</span>
-                        <span className="detail-value">{fornecedor.cidade} - {fornecedor.estado}</span>
-                      </div>
-                    )}
+                    <div className="detail-row">
+                      <span className="detail-label">REMETENTE:</span>
+                      <span className="detail-value">{fornecedor.remetente}</span>
+                    </div>
                   </div>
                 </div>
                 <div className="estoque-item-actions">
@@ -166,6 +159,12 @@ const EstoqueFornecedorChipGSM: React.FC = () => {
           </div>
         )}
       </div>
+
+      <FornecedorChipGSMModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleSalvarNovo}
+      />
     </div>
   )
 }
