@@ -14,6 +14,28 @@ import CadastroRastreador from "../pages/CadastroRastreador"
 import EstoqueChipGSM from "../pages/EstoqueChipGSM"
 import EstoqueEquipamento from "../pages/EstoqueEquipamento"
 import EstoqueFornecedorChipGSM from "../pages/EstoqueFornecedorChipGSM"
+import RelatorioParadaDeslocamento from "../pages/RelatorioParadaDeslocamento"
+import RelatorioHistorico from "../pages/RelatorioHistorico"
+import RelatorioMotoristaJornada from "../pages/RelatorioMotoristaJornada"
+import RelatorioLogistica from "../pages/RelatorioLogistica"
+import RelatorioEvento from "../pages/RelatorioEvento"
+import RelatorioManutencao from "../pages/RelatorioManutencao"
+import RelatorioAbastecimento from "../pages/RelatorioAbastecimento"
+import RelatorioMulta from "../pages/RelatorioMulta"
+import RelatorioViagem from "../pages/RelatorioViagem"
+import RelatorioCustoViagem from "../pages/RelatorioCustoViagem"
+import RelatorioEntrega from "../pages/RelatorioEntrega"
+import RelatorioChecklist from "../pages/RelatorioChecklist"
+import RelatorioVinculo from "../pages/RelatorioVinculo"
+import RelatorioPontos from "../pages/RelatorioPontos"
+import RelatorioCercas from "../pages/RelatorioCercas"
+import RelatorioAtraso from "../pages/RelatorioAtraso"
+import RelatorioMatrizCliente from "../pages/RelatorioMatrizCliente"
+import RelatorioFinanceiro from "../pages/RelatorioFinanceiro"
+import RelatorioFrota from "../pages/RelatorioFrota"
+import PerimetrosPonto from "../pages/PerimetrosPonto"
+import PerimetrosCerca from "../pages/PerimetrosCerca"
+import PerimetrosRota from "../pages/PerimetrosRota"
 import Perfil from "../pages/Perfil"
 import Configuracoes from "../pages/Configuracoes"
 import Layout from "../components/Layout"
@@ -44,6 +66,28 @@ const AppRouter: React.FC = () => {
             <Route path="/estoque/chip-gsm" element={<EstoqueChipGSM />} />
             <Route path="/estoque/equipamento" element={<EstoqueEquipamento />} />
             <Route path="/estoque/fornecedor-chip-gsm" element={<EstoqueFornecedorChipGSM />} />
+            <Route path="/relatorios/historico" element={<RelatorioHistorico />} />
+            <Route path="/relatorios/parada-deslocamento" element={<RelatorioParadaDeslocamento />} />
+            <Route path="/relatorios/motorista-jornada" element={<RelatorioMotoristaJornada />} />
+            <Route path="/relatorios/logistica" element={<RelatorioLogistica />} />
+            <Route path="/relatorios/evento" element={<RelatorioEvento />} />
+            <Route path="/relatorios/manutencao" element={<RelatorioManutencao />} />
+            <Route path="/relatorios/abastecimento" element={<RelatorioAbastecimento />} />
+            <Route path="/relatorios/multa" element={<RelatorioMulta />} />
+            <Route path="/relatorios/viagem" element={<RelatorioViagem />} />
+            <Route path="/relatorios/custo-viagem" element={<RelatorioCustoViagem />} />
+            <Route path="/relatorios/entrega" element={<RelatorioEntrega />} />
+            <Route path="/relatorios/checklist" element={<RelatorioChecklist />} />
+            <Route path="/relatorios/vinculo" element={<RelatorioVinculo />} />
+            <Route path="/relatorios/pontos" element={<RelatorioPontos />} />
+            <Route path="/relatorios/cercas" element={<RelatorioCercas />} />
+            <Route path="/relatorios/atraso" element={<RelatorioAtraso />} />
+            <Route path="/relatorios/matriz-cliente" element={<RelatorioMatrizCliente />} />
+            <Route path="/relatorios/financeiro" element={<RelatorioFinanceiro />} />
+            <Route path="/relatorios/frota" element={<RelatorioFrota />} />
+            <Route path="/perimetros/ponto" element={<PerimetrosPonto />} />
+            <Route path="/perimetros/cerca" element={<PerimetrosCerca />} />
+            <Route path="/perimetros/rota" element={<PerimetrosRota />} />
             <Route path="/profile" element={<Perfil />} />
             <Route path="/settings" element={<Configuracoes />} />
             {/* Add other protected routes here as needed */}

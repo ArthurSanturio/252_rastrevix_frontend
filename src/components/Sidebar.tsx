@@ -13,7 +13,27 @@ import {
   ChevronDown,
   ShoppingCart,
   Cpu,
-  Building
+  Building,
+  FileText,
+  History,
+  Clock,
+  Truck,
+  AlertCircle,
+  Wrench,
+  Fuel,
+  FileWarning,
+  Route,
+  DollarSign,
+  Package,
+  CheckSquare,
+  Link2,
+  MapPin,
+  Shield,
+  Timer,
+  Building2,
+  TrendingUp,
+  Car,
+  Square
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -28,6 +48,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
   const { isAuthenticated, user, logout } = useAuth();
   const [isCadastroOpen, setIsCadastroOpen] = useState(location.pathname.startsWith('/cadastro'));
   const [isEstoqueOpen, setIsEstoqueOpen] = useState(location.pathname.startsWith('/estoque'));
+  const [isRelatoriosOpen, setIsRelatoriosOpen] = useState(location.pathname.startsWith('/relatorios'));
+  const [isPerimetrosOpen, setIsPerimetrosOpen] = useState(location.pathname.startsWith('/perimetros'));
 
   const handleLogout = () => {
     logout();
@@ -42,10 +64,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
     setIsEstoqueOpen(!isEstoqueOpen);
   };
 
+  const toggleRelatorios = () => {
+    setIsRelatoriosOpen(!isRelatoriosOpen);
+  };
+
+  const togglePerimetros = () => {
+    setIsPerimetrosOpen(!isPerimetrosOpen);
+  };
+
   // Abrir menu automaticamente quando estiver na rota correspondente
   useEffect(() => {
     setIsCadastroOpen(location.pathname.startsWith('/cadastro'));
     setIsEstoqueOpen(location.pathname.startsWith('/estoque'));
+    setIsRelatoriosOpen(location.pathname.startsWith('/relatorios'));
+    setIsPerimetrosOpen(location.pathname.startsWith('/perimetros'));
   }, [location.pathname]);
 
   const getIcon = (iconName: string, size: number = 20) => {
@@ -74,6 +106,46 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
         return <Cpu {...iconProps} />;
       case 'building':
         return <Building {...iconProps} />;
+      case 'file-text':
+        return <FileText {...iconProps} />;
+      case 'history':
+        return <History {...iconProps} />;
+      case 'clock':
+        return <Clock {...iconProps} />;
+      case 'truck':
+        return <Truck {...iconProps} />;
+      case 'alert-circle':
+        return <AlertCircle {...iconProps} />;
+      case 'wrench':
+        return <Wrench {...iconProps} />;
+      case 'fuel':
+        return <Fuel {...iconProps} />;
+      case 'file-warning':
+        return <FileWarning {...iconProps} />;
+      case 'route':
+        return <Route {...iconProps} />;
+      case 'dollar-sign':
+        return <DollarSign {...iconProps} />;
+      case 'package':
+        return <Package {...iconProps} />;
+      case 'check-square':
+        return <CheckSquare {...iconProps} />;
+      case 'link2':
+        return <Link2 {...iconProps} />;
+      case 'map-pin':
+        return <MapPin {...iconProps} />;
+      case 'shield':
+        return <Shield {...iconProps} />;
+      case 'timer':
+        return <Timer {...iconProps} />;
+      case 'building2':
+        return <Building2 {...iconProps} />;
+      case 'trending-up':
+        return <TrendingUp {...iconProps} />;
+      case 'car':
+        return <Car {...iconProps} />;
+      case 'square':
+        return <Square {...iconProps} />;
       default:
         return <div className="sidebar-icon" style={{ width: size, height: size }}></div>;
     }
@@ -142,6 +214,130 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
       ]
     },
     {
+      name: 'Relatórios',
+      icon: 'file-text',
+      protected: true,
+      submenu: [
+        {
+          name: 'Histórico',
+          path: '/relatorios/historico',
+          icon: 'history'
+        },
+        {
+          name: 'Parada/Desloc.',
+          path: '/relatorios/parada-deslocamento',
+          icon: 'map'
+        },
+        {
+          name: 'Moto./Jornada',
+          path: '/relatorios/motorista-jornada',
+          icon: 'clock'
+        },
+        {
+          name: 'Logística',
+          path: '/relatorios/logistica',
+          icon: 'truck'
+        },
+        {
+          name: 'Evento',
+          path: '/relatorios/evento',
+          icon: 'alert-circle'
+        },
+        {
+          name: 'Manutenção',
+          path: '/relatorios/manutencao',
+          icon: 'wrench'
+        },
+        {
+          name: 'Abastecimento',
+          path: '/relatorios/abastecimento',
+          icon: 'fuel'
+        },
+        {
+          name: 'Multa',
+          path: '/relatorios/multa',
+          icon: 'file-warning'
+        },
+        {
+          name: 'Viagem',
+          path: '/relatorios/viagem',
+          icon: 'route'
+        },
+        {
+          name: 'Custo de Viagem',
+          path: '/relatorios/custo-viagem',
+          icon: 'dollar-sign'
+        },
+        {
+          name: 'Entrega',
+          path: '/relatorios/entrega',
+          icon: 'package'
+        },
+        {
+          name: 'Checklist',
+          path: '/relatorios/checklist',
+          icon: 'check-square'
+        },
+        {
+          name: 'Vínculo',
+          path: '/relatorios/vinculo',
+          icon: 'link2'
+        },
+        {
+          name: 'Pontos',
+          path: '/relatorios/pontos',
+          icon: 'map-pin'
+        },
+        {
+          name: 'Cercas',
+          path: '/relatorios/cercas',
+          icon: 'shield'
+        },
+        {
+          name: 'Atraso',
+          path: '/relatorios/atraso',
+          icon: 'timer'
+        },
+        {
+          name: 'Matriz/Cliente',
+          path: '/relatorios/matriz-cliente',
+          icon: 'building2'
+        },
+        {
+          name: 'Financeiro',
+          path: '/relatorios/financeiro',
+          icon: 'trending-up'
+        },
+        {
+          name: 'Frota',
+          path: '/relatorios/frota',
+          icon: 'car'
+        }
+      ]
+    },
+    {
+      name: 'Perímetros',
+      icon: 'square',
+      protected: true,
+      submenu: [
+        {
+          name: 'Ponto',
+          path: '/perimetros/ponto',
+          icon: 'map-pin'
+        },
+        {
+          name: 'Cerca',
+          path: '/perimetros/cerca',
+          icon: 'shield'
+        },
+        {
+          name: 'Rota',
+          path: '/perimetros/rota',
+          icon: 'route'
+        }
+      ]
+    },
+    {
       name: 'Perfil',
       path: '/profile',
       icon: 'user',
@@ -199,15 +395,21 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
                   <div className="sidebar-submenu">
                     <div
                       className="sidebar-link sidebar-submenu-header"
-                      onClick={item.name === 'Cadastro' ? toggleCadastro : item.name === 'Estoque' ? toggleEstoque : undefined}
+                      onClick={
+                        item.name === 'Cadastro' ? toggleCadastro
+                          : item.name === 'Estoque' ? toggleEstoque
+                            : item.name === 'Relatórios' ? toggleRelatorios
+                              : item.name === 'Perímetros' ? togglePerimetros
+                                : undefined
+                      }
                       style={{ cursor: 'pointer' }}
                       title={isCollapsed ? item.name : undefined}
                     >
                       {getIcon(item.icon)}
                       {!isCollapsed && <span className="sidebar-text">{item.name}</span>}
-                      {!isCollapsed && <ChevronDown size={16} className={`sidebar-arrow ${(item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen) ? 'open' : ''}`} />}
+                      {!isCollapsed && <ChevronDown size={16} className={`sidebar-arrow ${(item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen) || (item.name === 'Relatórios' && isRelatoriosOpen) || (item.name === 'Perímetros' && isPerimetrosOpen) ? 'open' : ''}`} />}
                     </div>
-                    {((item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen)) && (
+                    {((item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen) || (item.name === 'Relatórios' && isRelatoriosOpen) || (item.name === 'Perímetros' && isPerimetrosOpen)) && (
                       <ul className="sidebar-submenu-list">
                         {item.submenu.map((subItem) => (
                           <li key={subItem.path} className="sidebar-subitem">
