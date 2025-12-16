@@ -64,7 +64,7 @@ export interface Cliente {
 export interface ClienteCreateData {
     nome: string;
     email: string;
-    telefone: string;
+    telefone?: string;
     empresa: string;
     status?: 'ativo' | 'inativo' | 'pendente';
     endereco?: string;
@@ -206,3 +206,71 @@ export interface RastreadorDadosResponse {
         };
     };
 }
+
+// Tipos de eventos de telemetria
+export enum RastreadorEventType {
+    PANICO = 111,
+    SOS = 112,
+    IGNICAO_LIGADA = 113,
+    IGNICAO_DESLIGADA = 114,
+    MOVIMENTO_INICIADO = 115,
+    MOVIMENTO_PARADO = 116,
+    VELOCIDADE_EXCEDIDA = 117,
+    BATERIA_BAIXA = 118,
+    ANTENA_CORTADA = 119,
+    CERCA_ENTRADA = 120,
+    CERCA_SAIDA = 121,
+    ACELERACAO_BRUSCA = 122,
+    FRENAGEM_BRUSCA = 123,
+    CURVA_BRUSCA = 124,
+    COLISAO = 125,
+    IDENTIFICACAO_RS232 = 126,
+    OUTROS = 127
+}
+
+export interface EventoRastreador {
+    id: string;
+    rastreadorId: string;
+    timestamp: string;
+    eventoId: number;
+    eventoStatus?: string;
+    eventoNome?: string;
+    descricao?: string;
+    processado: boolean;
+    dataRecebimento: string;
+}
+
+export interface RastreadorEventosResponse {
+    message: string;
+    data: {
+        rastreador: Rastreador;
+        eventos: EventoRastreador[];
+        pagination: {
+            page: number;
+            limit: number;
+            total: number;
+            pages: number;
+        };
+    };
+}
+
+// Mapeamento de nomes de eventos
+export const EVENTOS_TELEMETRIA: Record<number, string> = {
+    111: 'Pânico',
+    112: 'SOS',
+    113: 'Ignição Ligada',
+    114: 'Ignição Desligada',
+    115: 'Movimento Iniciado',
+    116: 'Movimento Parado',
+    117: 'Velocidade Excedida',
+    118: 'Bateria Baixa',
+    119: 'Antena Cortada',
+    120: 'Cerca Entrada',
+    121: 'Cerca Saída',
+    122: 'Aceleração Brusca',
+    123: 'Frenagem Brusca',
+    124: 'Curva Brusca',
+    125: 'Colisão',
+    126: 'Identificação RS232',
+    127: 'Outros'
+};

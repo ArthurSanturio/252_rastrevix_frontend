@@ -229,7 +229,31 @@
   border-color: rgba(59, 130, 246, 0.4);
 }
 
-.loading-state, .error-state, .no-results {
+.loading, .loading-state, .error-state, .error-message, .no-results {
+  color: var(--text-secondary);
+  padding: 1rem;
+  text-align: center;
+}
+
+.loading, .loading-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border-radius: var(--radius);
+}
+
+.error-state, .error-message {
+  text-align: center;
+  padding: 1rem;
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius);
+  margin: 1rem 0;
+}
+
+.no-results {
   text-align: center;
   padding: 2rem;
   color: var(--text-secondary);
@@ -1638,6 +1662,72 @@
   background: var(--surface-hover);
 }
 
+.veiculos-table tbody tr {
+  background: var(--surface);
+}
+
+.veiculos-table tbody tr:nth-child(even) {
+  background: var(--surface-elevated);
+}
+
+/* Estilos para tabela de dados geral */
+.table-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.data-table thead {
+  background: var(--surface-elevated);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.data-table th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border);
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+}
+
+.data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-primary);
+  background: var(--surface);
+}
+
+.data-table tbody tr:hover {
+  background: var(--surface-hover);
+}
+
+.data-table tbody tr:nth-child(even) {
+  background: var(--surface-elevated);
+}
+
+.data-table tbody tr:nth-child(even):hover {
+  background: var(--surface-hover);
+}
+
+.data-table .empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-secondary);
+}
+
 .action-buttons {
   display: flex;
   gap: 0.5rem;
@@ -1922,4 +2012,229 @@
     width: 95%;
     max-height: 95vh;
   }
+}
+
+/* ===== TELEMETRIA EVENTO STYLES ===== */
+
+.dashboard-page {
+  padding: 2rem;
+  min-height: 100vh;
+  background: var(--background);
+}
+
+.page-header {
+  margin-bottom: 2rem;
+}
+
+.page-header h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.breadcrumb {
+  display: flex;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.breadcrumb span:last-child {
+  color: var(--accent-secondary);
+  font-weight: 600;
+}
+
+.telemetria-container {
+  display: flex;
+  gap: 2rem;
+  height: calc(100vh - 200px);
+}
+
+.telemetria-left-panel {
+  width: 400px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.search-box {
+  position: relative;
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.search-icon {
+  position: absolute;
+  left: 1.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+}
+
+.search-input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.5rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search-input:focus {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+}
+
+.clientes-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0.5rem;
+}
+
+.cliente-item {
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: 1px solid var(--border);
+  background: var(--surface-elevated);
+}
+
+.cliente-item:hover {
+  background: var(--surface-hover);
+  border-color: var(--border-hover);
+}
+
+.cliente-item.selected {
+  background: rgba(0, 217, 255, 0.15);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.cliente-item.bloqueado {
+  opacity: 0.6;
+}
+
+.cliente-nome {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.cliente-item.selected .cliente-nome {
+  color: var(--text-primary);
+}
+
+.cliente-abrev {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.cliente-item.selected .cliente-abrev {
+  color: var(--text-secondary);
+}
+
+.bloqueado-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.25rem 0.5rem;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.telemetria-right-panel {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.panel-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.btn-add {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-add:hover {
+  background: #16a34a;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+}
+
+.eventos-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.info-message {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2rem;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.empty-icon {
+  color: var(--warning);
+  margin-bottom: 1rem;
+}
+
+.empty-message {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+.loading-message {
+  padding: 2rem;
+  text-align: center;
+  color: var(--text-secondary);
 }

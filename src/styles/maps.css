@@ -171,16 +171,17 @@
   z-index: 1000;
   display: flex;
   gap: 0.5rem;
-  background: white;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   padding: 0.25rem;
 }
 
 .map-control-btn {
   padding: 0.5rem 1rem;
   border: 1px solid var(--border);
-  background: white;
+  background: var(--surface-elevated);
   color: var(--text-primary);
   border-radius: 4px;
   cursor: pointer;
@@ -233,7 +234,7 @@
 }
 
 .leaflet-popup-tip {
-  background: white !important;
+  background: var(--surface) !important;
 }
 
 /* Scrollbar personalizada para os cartões */

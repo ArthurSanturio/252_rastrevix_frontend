@@ -5,9 +5,11 @@ import { useState, useEffect } from "react"
 import { Pencil, Trash2 } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
 import { rastreadorService } from "../services/rastreadorService"
+import ImportExportButtons from "../components/ImportExportButtons"
 import { showSuccess, showError, showWarning } from "../utils/toast"
 import type { Rastreador } from "../types"
 import "../styles/dashboard-pages.css"
+import "../styles/import-export.css"
 
 interface RastreadorFormData {
   numeroSerial: string
@@ -464,30 +466,51 @@ const CadastroRastreador: React.FC = () => {
           <h1>Cadastro de Rastreadores</h1>
           <p>Gerencie os rastreadores veiculares do sistema</p>
         </div>
-        <button
-          className="btn btn-primary"
-          onClick={() => {
-            setRastreadorSelecionado(null)
-            setFormData({
-              numeroSerial: '',
-              imei: '',
-              status: 'ativo',
-              modelo: '',
-              fabricante: '',
-              versaoFirmware: '',
-              placa: '',
-              nome: '',
-              condutor: '',
-              tipoVeiculo: 'carro',
-              bloqueado: false,
-              tipoTransmissao: 'GPRS',
-              observacoes: ''
-            })
-            setIsModalOpen(true)
-          }}
-        >
-          + Novo Rastreador
-        </button>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {rastreadores.length > 0 && (
+            <ImportExportButtons
+              data={rastreadores}
+              filename="rastreadores"
+              title="Lista de Rastreadores"
+              columns={[
+                { key: 'numeroSerial', label: 'Nº Serial' },
+                { key: 'imei', label: 'IMEI' },
+                { key: 'placa', label: 'Placa' },
+                { key: 'nome', label: 'Nome' },
+                { key: 'condutor', label: 'Condutor' },
+                { key: 'tipoVeiculo', label: 'Tipo Veículo' },
+                { key: 'status', label: 'Status' },
+                { key: 'fabricante', label: 'Fabricante' },
+                { key: 'modelo', label: 'Modelo' }
+              ]}
+              importEnabled={false}
+            />
+          )}
+          <button
+            className="btn btn-primary"
+            onClick={() => {
+              setRastreadorSelecionado(null)
+              setFormData({
+                numeroSerial: '',
+                imei: '',
+                status: 'ativo',
+                modelo: '',
+                fabricante: '',
+                versaoFirmware: '',
+                placa: '',
+                nome: '',
+                condutor: '',
+                tipoVeiculo: 'carro',
+                bloqueado: false,
+                tipoTransmissao: 'GPRS',
+                observacoes: ''
+              })
+              setIsModalOpen(true)
+            }}
+          >
+            + Novo Rastreador
+          </button>
+        </div>
       </div>
 
       {error && <div className="error-message">{error}</div>}

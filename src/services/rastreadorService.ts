@@ -5,6 +5,7 @@ import type {
     RastreadorListResponse,
     RastreadorPosicaoResponse,
     RastreadorDadosResponse,
+    RastreadorEventosResponse,
     DadosRastreador
 } from '../types';
 
@@ -129,6 +130,29 @@ class RastreadorService {
         return apiService.request<{ message: string }>(`${this.baseEndpoint}/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    // Obter eventos de um rastreador
+    async obterEventos(id: string, params?: {
+        page?: number;
+        limit?: number;
+        dataInicio?: string;
+        dataFim?: string;
+        eventoId?: number;
+    }): Promise<RastreadorEventosResponse> {
+        const queryParams = new URLSearchParams();
+
+        if (params?.page) queryParams.append('page', params.page.toString());
+        if (params?.limit) queryParams.append('limit', params.limit.toString());
+        if (params?.dataInicio) queryParams.append('dataInicio', params.dataInicio);
+        if (params?.dataFim) queryParams.append('dataFim', params.dataFim);
+        if (params?.eventoId) queryParams.append('eventoId', params.eventoId.toString());
+
+        const endpoint = queryParams.toString()
+            ? `${this.baseEndpoint}/${id}/eventos?${queryParams.toString()}`
+            : `${this.baseEndpoint}/${id}/eventos`;
+
+        return apiService.request<RastreadorEventosResponse>(endpoint);
     }
 }
 

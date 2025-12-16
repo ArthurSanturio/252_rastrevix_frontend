@@ -22,7 +22,7 @@ export interface Cliente {
 export interface ClienteCreateData {
     nome: string;
     email: string;
-    telefone: string;
+    telefone?: string;
     empresa: string;
     status?: 'ativo' | 'inativo' | 'pendente';
     endereco?: string;
@@ -123,6 +123,13 @@ class ClienteService {
     // Deletar cliente
     async deletarCliente(id: string): Promise<{ message: string }> {
         return apiService.request<{ message: string }>(`${this.baseEndpoint}/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    // Deletar TODOS os clientes (requer admin)
+    async deletarTodosClientes(): Promise<{ message: string; data: { deletedCount: number } }> {
+        return apiService.request<{ message: string; data: { deletedCount: number } }>(`${this.baseEndpoint}/all`, {
             method: 'DELETE',
         });
     }

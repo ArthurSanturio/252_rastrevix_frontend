@@ -6,8 +6,10 @@ import { Trash2 } from "lucide-react"
 import { useAuth } from "../contexts/AuthContext"
 import { maquinaService } from "../services/maquinaService"
 import { clienteService, type Cliente } from "../services/clienteService"
+import ImportExportButtons from "../components/ImportExportButtons"
 import { showSuccess, showError } from "../utils/toast"
 import "../styles/dashboard-pages.css"
+import "../styles/import-export.css"
 
 interface Maquina {
   id: string;
@@ -250,7 +252,25 @@ const CadastroMaquina: React.FC = () => {
     <div className="dashboard-page">
       <div className="page-header">
         <h1>CADASTRO • MÁQUINA/VEÍCULO</h1>
-        <div className="header-actions">
+        <div className="header-actions" style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          {clienteSelecionado && veiculosFiltrados.length > 0 && (
+            <ImportExportButtons
+              data={veiculosFiltrados}
+              filename={`maquinas-${clienteSelecionado.nome}`}
+              title={`Máquinas/Veículos - ${clienteSelecionado.nome}`}
+              columns={[
+                { key: 'placa', label: 'Placa' },
+                { key: 'codigo', label: 'Código' },
+                { key: 'nome', label: 'Nome' },
+                { key: 'grupo', label: 'Grupo' },
+                { key: 'fabricante', label: 'Marca' },
+                { key: 'modelo', label: 'Modelo' },
+                { key: 'tipo', label: 'Tipo' },
+                { key: 'status', label: 'Status' }
+              ]}
+              importEnabled={false}
+            />
+          )}
           {clienteSelecionado && (
             <button
               className="btn btn-primary"

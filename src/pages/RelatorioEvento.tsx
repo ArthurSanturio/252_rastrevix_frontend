@@ -5,6 +5,7 @@ import { Search, Calendar, Clock } from 'lucide-react';
 import '../styles/dashboard-pages.css';
 import '../styles/relatorios.css';
 import { calcularPeriodoRapido } from '../utils/relatorioHelpers';
+import { EVENTOS_TELEMETRIA } from '../types';
 
 interface RelatorioEventoFormData {
   clienteId: string;
@@ -259,6 +260,11 @@ const RelatorioEvento: React.FC = () => {
                   className="form-select"
                 >
                   <option value="">[Selecione um Evento]</option>
+                  {Object.entries(EVENTOS_TELEMETRIA).map(([id, nome]) => (
+                    <option key={id} value={id}>
+                      {nome} ({id})
+                    </option>
+                  ))}
                 </select>
               </div>
             </div>

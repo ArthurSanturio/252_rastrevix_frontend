@@ -8,11 +8,13 @@ import ColaboradorModal from "../components/ColaboradorModal"
 import ColaboradorDetalhesModal from "../components/ColaboradorDetalhesModal"
 import ColaboradorEditarModal from "../components/ColaboradorEditarModal"
 import ConfirmModal from "../components/ConfirmModal"
+import ImportExportButtons from "../components/ImportExportButtons"
 import { colaboradorService } from "../services/colaboradorService"
 import { clienteService } from "../services/clienteService"
 import { showSuccess, showError, showWarning } from "../utils/toast"
 import "../styles/colaboradores.css"
 import "../styles/dashboard-pages.css"
+import "../styles/import-export.css"
 
 // Interfaces locais
 interface Colaborador {
@@ -356,8 +358,28 @@ const CadastroColaborador: React.FC = () => {
   return (
     <div className="dashboard-content">
       <div className="dashboard-welcome">
-        <h2>CADASTRO • COLABORADOR</h2>
-        <p>Selecione um cliente para gerenciar seus colaboradores</p>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h2>CADASTRO • COLABORADOR</h2>
+            <p>Selecione um cliente para gerenciar seus colaboradores</p>
+          </div>
+          {clienteSelecionado && colaboradoresFiltrados.length > 0 && (
+            <ImportExportButtons
+              data={colaboradoresFiltrados}
+              filename={`colaboradores-${clienteSelecionado.nome}`}
+              title={`Colaboradores - ${clienteSelecionado.nome}`}
+              columns={[
+                { key: 'nome', label: 'Nome' },
+                { key: 'email', label: 'Email' },
+                { key: 'telefone', label: 'Telefone' },
+                { key: 'cargo', label: 'Cargo' },
+                { key: 'departamento', label: 'Departamento' },
+                { key: 'status', label: 'Status' }
+              ]}
+              importEnabled={false}
+            />
+          )}
+        </div>
       </div>
 
       {/* Layout de dois painéis */}

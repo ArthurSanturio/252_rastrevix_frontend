@@ -33,7 +33,10 @@ import {
   Building2,
   TrendingUp,
   Car,
-  Square
+  Square,
+  Activity,
+  Briefcase,
+  RefreshCw
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -50,6 +53,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
   const [isEstoqueOpen, setIsEstoqueOpen] = useState(location.pathname.startsWith('/estoque'));
   const [isRelatoriosOpen, setIsRelatoriosOpen] = useState(location.pathname.startsWith('/relatorios'));
   const [isPerimetrosOpen, setIsPerimetrosOpen] = useState(location.pathname.startsWith('/perimetros'));
+  const [isTelemetriaOpen, setIsTelemetriaOpen] = useState(location.pathname.startsWith('/telemetria'));
+  const [isGerenciaOpen, setIsGerenciaOpen] = useState(location.pathname.startsWith('/gerencia'));
 
   const handleLogout = () => {
     logout();
@@ -72,12 +77,22 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
     setIsPerimetrosOpen(!isPerimetrosOpen);
   };
 
+  const toggleTelemetria = () => {
+    setIsTelemetriaOpen(!isTelemetriaOpen);
+  };
+
+  const toggleGerencia = () => {
+    setIsGerenciaOpen(!isGerenciaOpen);
+  };
+
   // Abrir menu automaticamente quando estiver na rota correspondente
   useEffect(() => {
     setIsCadastroOpen(location.pathname.startsWith('/cadastro'));
     setIsEstoqueOpen(location.pathname.startsWith('/estoque'));
     setIsRelatoriosOpen(location.pathname.startsWith('/relatorios'));
     setIsPerimetrosOpen(location.pathname.startsWith('/perimetros'));
+    setIsTelemetriaOpen(location.pathname.startsWith('/telemetria'));
+    setIsGerenciaOpen(location.pathname.startsWith('/gerencia'));
   }, [location.pathname]);
 
   const getIcon = (iconName: string, size: number = 20) => {
@@ -146,6 +161,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
         return <Car {...iconProps} />;
       case 'square':
         return <Square {...iconProps} />;
+      case 'activity':
+        return <Activity {...iconProps} />;
+      case 'briefcase':
+        return <Briefcase {...iconProps} />;
+      case 'refresh-cw':
+        return <RefreshCw {...iconProps} />;
       default:
         return <div className="sidebar-icon" style={{ width: size, height: size }}></div>;
     }
@@ -316,6 +337,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
       ]
     },
     {
+      name: 'Telemetria',
+      icon: 'activity',
+      protected: true,
+      submenu: [
+        {
+          name: 'Evento',
+          path: '/telemetria/evento',
+          icon: 'alert-circle'
+        }
+      ]
+    },
+    {
       name: 'Perímetros',
       icon: 'square',
       protected: true,
@@ -334,6 +367,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
           name: 'Rota',
           path: '/perimetros/rota',
           icon: 'route'
+        }
+      ]
+    },
+    {
+      name: 'Gerência',
+      icon: 'briefcase',
+      protected: true,
+      submenu: [
+        {
+          name: 'Integração',
+          path: '/gerencia/integracao',
+          icon: 'refresh-cw'
         }
       ]
     },
@@ -399,17 +444,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose, isCollapsed, onToggl
                         item.name === 'Cadastro' ? toggleCadastro
                           : item.name === 'Estoque' ? toggleEstoque
                             : item.name === 'Relatórios' ? toggleRelatorios
-                              : item.name === 'Perímetros' ? togglePerimetros
-                                : undefined
+                              : item.name === 'Telemetria' ? toggleTelemetria
+                                : item.name === 'Perímetros' ? togglePerimetros
+                                  : item.name === 'Gerência' ? toggleGerencia
+                                    : undefined
                       }
                       style={{ cursor: 'pointer' }}
                       title={isCollapsed ? item.name : undefined}
                     >
                       {getIcon(item.icon)}
                       {!isCollapsed && <span className="sidebar-text">{item.name}</span>}
-                      {!isCollapsed && <ChevronDown size={16} className={`sidebar-arrow ${(item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen) || (item.name === 'Relatórios' && isRelatoriosOpen) || (item.name === 'Perímetros' && isPerimetrosOpen) ? 'open' : ''}`} />}
+                      {!isCollapsed && <ChevronDown size={16} className={`sidebar-arrow ${(item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen) || (item.name === 'Relatórios' && isRelatoriosOpen) || (item.name === 'Telemetria' && isTelemetriaOpen) || (item.name === 'Perímetros' && isPerimetrosOpen) || (item.name === 'Gerência' && isGerenciaOpen) ? 'open' : ''}`} />}
                     </div>
-                    {((item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen) || (item.name === 'Relatórios' && isRelatoriosOpen) || (item.name === 'Perímetros' && isPerimetrosOpen)) && (
+                    {((item.name === 'Cadastro' && isCadastroOpen) || (item.name === 'Estoque' && isEstoqueOpen) || (item.name === 'Relatórios' && isRelatoriosOpen) || (item.name === 'Telemetria' && isTelemetriaOpen) || (item.name === 'Perímetros' && isPerimetrosOpen) || (item.name === 'Gerência' && isGerenciaOpen)) && (
                       <ul className="sidebar-submenu-list">
                         {item.submenu.map((subItem) => (
                           <li key={subItem.path} className="sidebar-subitem">
