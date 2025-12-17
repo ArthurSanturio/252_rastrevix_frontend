@@ -11,7 +11,7 @@ interface RelatorioAtrasoFormData {
 
 const RelatorioAtraso: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RelatorioAtrasoFormData, string>>>({});
 
   const [formData, setFormData] = useState<RelatorioAtrasoFormData>({

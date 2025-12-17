@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Search, Plus, Download, Trash2 } from "lucide-react"
-import { useAuth } from "../contexts/AuthContext"
 import { chipGsmService, type ChipGSM } from "../services/chipGsmService"
 import { showSuccess, showError } from "../utils/toast"
 import ChipGsmModal from "../components/ChipGsmModal"
@@ -11,13 +10,11 @@ import "../styles/dashboard-pages.css"
 import "../styles/estoque.css"
 
 const EstoqueChipGSM: React.FC = () => {
-  const { user } = useAuth()
   const [chips, setChips] = useState<ChipGSM[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [selectedChip, setSelectedChip] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [total, setTotal] = useState(0)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
@@ -33,7 +30,6 @@ const EstoqueChipGSM: React.FC = () => {
         search: searchTerm || undefined,
       })
       setChips(response.data.chips)
-      setTotal(response.data.pagination.total)
     } catch (error) {
       console.error('Erro ao carregar chips GSM:', error)
       showError('Erro ao carregar chips GSM. Tente novamente.')

@@ -27,7 +27,7 @@ const RelatorioParadaDeslocamento: React.FC = () => {
   const [veiculos, setVeiculos] = useState<Maquina[]>([]);
   const [veiculosSelecionados, setVeiculosSelecionados] = useState<string[]>([]);
   const [veiculosDropdownOpen, setVeiculosDropdownOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RelatorioFormData, string>>>({});
 
   const [formData, setFormData] = useState<RelatorioFormData>({

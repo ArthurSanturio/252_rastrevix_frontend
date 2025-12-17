@@ -5,8 +5,7 @@ import type {
     RastreadorListResponse,
     RastreadorPosicaoResponse,
     RastreadorDadosResponse,
-    RastreadorEventosResponse,
-    DadosRastreador
+    RastreadorEventosResponse
 } from '../types';
 
 class RastreadorService {

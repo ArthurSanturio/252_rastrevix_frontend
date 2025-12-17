@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Search, Plus, Download, Trash2, Pencil } from "lucide-react"
-import { useAuth } from "../contexts/AuthContext"
 import { rastreadorService } from "../services/rastreadorService"
 import { showSuccess, showError } from "../utils/toast"
 import type { Rastreador } from "../types"
@@ -51,7 +50,6 @@ const mapRastreadorToEquipamento = (rastreador: Rastreador): Equipamento => {
 }
 
 const EstoqueEquipamento: React.FC = () => {
-  const { user } = useAuth()
   const [equipamentos, setEquipamentos] = useState<Equipamento[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)

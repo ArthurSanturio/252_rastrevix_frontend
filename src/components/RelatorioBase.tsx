@@ -32,7 +32,6 @@ const RelatorioBase: React.FC<RelatorioBaseProps> = ({
   const [veiculos, setVeiculos] = useState<Maquina[]>([]);
   const [veiculosSelecionados, setVeiculosSelecionados] = useState<string[]>([]);
   const [veiculosDropdownOpen, setVeiculosDropdownOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RelatorioFormData, string>>>({});
 
   const [formData, setFormData] = useState<RelatorioFormData>({
@@ -95,19 +94,15 @@ const RelatorioBase: React.FC<RelatorioBaseProps> = ({
 
   const carregarClientes = async () => {
     try {
-      setLoading(true);
       const response = await clienteService.listarClientes({ limit: 1000 });
       setClientes(response.data.clientes);
     } catch (error) {
       console.error('Erro ao carregar clientes:', error);
-    } finally {
-      setLoading(false);
     }
   };
 
   const carregarVeiculos = async (clienteId: string) => {
     try {
-      setLoading(true);
       const response = await maquinaService.listarMaquinas({
         clienteId,
         limit: 1000
@@ -115,8 +110,6 @@ const RelatorioBase: React.FC<RelatorioBaseProps> = ({
       setVeiculos(response.data.maquinas);
     } catch (error) {
       console.error('Erro ao carregar veículos:', error);
-    } finally {
-      setLoading(false);
     }
   };
 

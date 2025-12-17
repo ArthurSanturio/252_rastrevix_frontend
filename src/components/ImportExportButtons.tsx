@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { Download, Upload, FileText, FileCode, FileSpreadsheet } from 'lucide-react';
+import { Upload, FileText, FileCode, FileSpreadsheet } from 'lucide-react';
 import { exportToPDF, exportToXML, exportToXLSX, importFromXML, importFromXLSX, getDefaultColumns } from '../utils/exportUtils';
 import { showSuccess, showError } from '../utils/toast';
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { clienteService, type Cliente } from '../services/clienteService';
-import { Search, Shield, Plus } from 'lucide-react';
+import { Search, Shield } from 'lucide-react';
 import '../styles/dashboard-pages.css';
 import '../styles/relatorios.css';
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { clienteService, type Cliente } from '../services/clienteService';
-import { Search, MapPin, Plus } from 'lucide-react';
+import { Search, MapPin } from 'lucide-react';
 import '../styles/dashboard-pages.css';
 import '../styles/relatorios.css';
 

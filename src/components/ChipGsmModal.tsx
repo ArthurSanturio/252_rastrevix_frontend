@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { chipGsmService, type ChipGSMCreateData } from '../services/chipGsmService'
-import { clienteService, type Cliente } from '../services/clienteService'
 
 interface ChipGsmFormData {
   numero: string

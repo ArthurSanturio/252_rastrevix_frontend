@@ -113,11 +113,10 @@ export const exportToPDF = async (
   try {
     // Verificar se jspdf está disponível, caso contrário usar método alternativo
     let jsPDF: any;
-    let autoTable: any;
 
     try {
       jsPDF = (await import('jspdf')).default;
-      autoTable = (await import('jspdf-autotable')).default;
+      await import('jspdf-autotable');
     } catch (error) {
       // Fallback: criar PDF simples usando canvas
       return exportToPDFSimple(data, filename, title, columns);
@@ -168,7 +167,7 @@ export const exportToPDF = async (
 // Método alternativo simples para PDF (sem biblioteca externa)
 const exportToPDFSimple = (
   data: any[],
-  filename: string,
+  _filename: string,
   title: string,
   columns: { key: string; label: string; width?: number }[]
 ): void => {

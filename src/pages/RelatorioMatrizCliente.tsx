@@ -11,8 +11,8 @@ interface RelatorioMatrizClienteFormData {
 
 const RelatorioMatrizCliente: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [matrizes, setMatrizes] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [matrizes] = useState<any[]>([]);
+  const [, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RelatorioMatrizClienteFormData, string>>>({});
 
   const [formData, setFormData] = useState<RelatorioMatrizClienteFormData>({

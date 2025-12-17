@@ -3,10 +3,9 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Pencil, Trash2 } from "lucide-react"
-import { useAuth } from "../contexts/AuthContext"
 import { rastreadorService } from "../services/rastreadorService"
 import ImportExportButtons from "../components/ImportExportButtons"
-import { showSuccess, showError, showWarning } from "../utils/toast"
+import { showSuccess, showError } from "../utils/toast"
 import type { Rastreador } from "../types"
 import "../styles/dashboard-pages.css"
 import "../styles/import-export.css"
@@ -28,9 +27,6 @@ interface RastreadorFormData {
 }
 
 const CadastroRastreador: React.FC = () => {
-  const { user } = useAuth()
-  const userName = user?.name || "Usuário"
-
   const [rastreadores, setRastreadores] = useState<Rastreador[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Trash2 } from "lucide-react"
-import { useAuth } from "../contexts/AuthContext"
 import { maquinaService } from "../services/maquinaService"
 import { clienteService, type Cliente } from "../services/clienteService"
 import ImportExportButtons from "../components/ImportExportButtons"
@@ -45,7 +44,6 @@ interface MaquinaFormData {
 }
 
 const CadastroMaquina: React.FC = () => {
-  const { user } = useAuth()
 
   // Estados
   const [clientes, setClientes] = useState<Cliente[]>([])

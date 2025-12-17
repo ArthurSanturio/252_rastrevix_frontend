@@ -4,7 +4,7 @@ import { maquinaService, type Maquina } from '../services/maquinaService';
 import { Search, Calendar, Clock, Plus } from 'lucide-react';
 import '../styles/dashboard-pages.css';
 import '../styles/relatorios.css';
-import { calcularPeriodoRapido, formatarData } from '../utils/relatorioHelpers';
+import { calcularPeriodoRapido } from '../utils/relatorioHelpers';
 
 interface RelatorioLogisticaFormData {
   clienteId: string;
@@ -21,7 +21,7 @@ interface RelatorioLogisticaFormData {
 const RelatorioLogistica: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [veiculos, setVeiculos] = useState<Maquina[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RelatorioLogisticaFormData, string>>>({});
 
   const [formData, setFormData] = useState<RelatorioLogisticaFormData>({

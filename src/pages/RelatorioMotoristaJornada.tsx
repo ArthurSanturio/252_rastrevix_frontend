@@ -23,7 +23,7 @@ interface RelatorioMotoristaJornadaFormData {
 
 const RelatorioMotoristaJornada: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RelatorioMotoristaJornadaFormData, string>>>({});
 
   const [formData, setFormData] = useState<RelatorioMotoristaJornadaFormData>({

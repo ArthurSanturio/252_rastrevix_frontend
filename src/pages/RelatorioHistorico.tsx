@@ -26,7 +26,7 @@ const RelatorioHistorico: React.FC = () => {
   const [veiculos, setVeiculos] = useState<Maquina[]>([]);
   const [veiculosSelecionados, setVeiculosSelecionados] = useState<string[]>([]);
   const [veiculosDropdownOpen, setVeiculosDropdownOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [errors, setErrors] = useState<Partial<Record<keyof RelatorioHistoricoFormData, string>>>({});
 
   const [formData, setFormData] = useState<RelatorioHistoricoFormData>({

@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Search, Plus, Download, Trash2 } from "lucide-react"
-import { useAuth } from "../contexts/AuthContext"
 import { fornecedorChipGsmService, type FornecedorChipGSM } from "../services/fornecedorChipGsmService"
 import { showSuccess, showError } from "../utils/toast"
 import FornecedorChipGSMModal from "../components/FornecedorChipGSMModal"
@@ -11,7 +10,6 @@ import "../styles/dashboard-pages.css"
 import "../styles/estoque.css"
 
 const EstoqueFornecedorChipGSM: React.FC = () => {
-  const { user } = useAuth()
   const [fornecedores, setFornecedores] = useState<FornecedorChipGSM[]>([])
   const [searchTerm, setSearchTerm] = useState("")
   const [isLoading, setIsLoading] = useState(true)

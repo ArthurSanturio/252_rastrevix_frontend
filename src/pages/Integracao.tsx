@@ -231,6 +231,8 @@ const Integracao: React.FC = () => {
       const item = data[i];
       setImportProgress(prev => prev ? { ...prev, current: i + 1 } : null);
 
+      let maquinaData: any = null;
+
       try {
         // Extrair campos com múltiplas variações de nome
         const codigo = item.codigo || item.Codigo || item.Código || item.placa || item.Placa || '';
@@ -250,7 +252,7 @@ const Integracao: React.FC = () => {
         const tiposValidos = ['torno', 'fresa', 'soldadora', 'prensa', 'cnc', 'outras'];
         const tipoNormalizado = tiposValidos.includes(tipo) ? tipo : 'outras';
 
-        const maquinaData = {
+        maquinaData = {
           codigo: codigo.trim(),
           nome: nome.trim(),
           tipo: tipoNormalizado,
@@ -278,7 +280,7 @@ const Integracao: React.FC = () => {
 
         console.log(`📤 Enviando veículo ${i + 1}:`, maquinaData);
 
-        const response = await apiService.request('/maquinas', {
+        await apiService.request('/maquinas', {
           method: 'POST',
           body: JSON.stringify(maquinaData)
         });
@@ -310,7 +312,7 @@ const Integracao: React.FC = () => {
     }
   };
 
-  const importPontos = async (data: any[]) => {
+  const importPontos = async (_data: any[]) => {
     toast.info('Importação de pontos em desenvolvimento');
   };
 
@@ -684,7 +686,7 @@ const Integracao: React.FC = () => {
             <div key={card.id} className="integration-card-wrapper">
               <input
                 type="file"
-                ref={(el) => (fileInputRefs.current[card.id] = el)}
+                ref={(el) => { fileInputRefs.current[card.id] = el; }}
                 onChange={(e) => handleFileChange(card.id, e)}
                 accept=".xlsx,.xls,.csv"
                 style={{ display: 'none' }}
@@ -732,7 +734,7 @@ const Integracao: React.FC = () => {
             <div key={card.id} className="integration-card-wrapper">
               <input
                 type="file"
-                ref={(el) => (fileInputRefs.current[card.id] = el)}
+                ref={(el) => { fileInputRefs.current[card.id] = el; }}
                 onChange={(e) => handleFileChange(card.id, e)}
                 accept=".xlsx,.xls,.csv"
                 style={{ display: 'none' }}

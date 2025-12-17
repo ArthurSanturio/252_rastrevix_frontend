@@ -3,7 +3,6 @@
 import type React from "react"
 import { useState, useEffect } from "react"
 import { Pencil, Trash2 } from "lucide-react"
-import { useAuth } from "../contexts/AuthContext"
 import ColaboradorModal from "../components/ColaboradorModal"
 import ColaboradorDetalhesModal from "../components/ColaboradorDetalhesModal"
 import ColaboradorEditarModal from "../components/ColaboradorEditarModal"
@@ -103,9 +102,6 @@ interface ColaboradorCreateData {
 }
 
 const CadastroColaborador: React.FC = () => {
-  const { user } = useAuth()
-  const userName = user?.name || "Usuário"
-
   // Estados para clientes
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [clienteSelecionado, setClienteSelecionado] = useState<Cliente | null>(null)
@@ -253,11 +249,6 @@ const CadastroColaborador: React.FC = () => {
     }
   }
 
-  const handleVerDetalhes = (colaborador: Colaborador) => {
-    setColaboradorSelecionado(colaborador)
-    setIsDetalhesModalOpen(true)
-  }
-
   const handleEditarColaborador = (colaborador: Colaborador) => {
     setColaboradorSelecionado(colaborador)
     setIsEditarModalOpen(true)
@@ -301,11 +292,6 @@ const CadastroColaborador: React.FC = () => {
     }
   }
 
-  const handleExcluirColaborador = (colaborador: Colaborador) => {
-    setColaboradorParaExcluir(colaborador)
-    setIsConfirmModalOpen(true)
-  }
-
   const confirmarExclusao = async () => {
     if (!colaboradorParaExcluir || !clienteSelecionado) return
 
@@ -326,32 +312,6 @@ const CadastroColaborador: React.FC = () => {
         showError('Erro ao remover colaborador. Tente novamente.')
       }
       setColaboradorParaExcluir(null)
-    }
-  }
-
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'ativo':
-        return 'status-ativo'
-      case 'inativo':
-        return 'status-inativo'
-      case 'treinamento':
-        return 'status-treinamento'
-      default:
-        return ''
-    }
-  }
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'ativo':
-        return 'ATIVO'
-      case 'inativo':
-        return 'INATIVO'
-      case 'treinamento':
-        return 'TREINAMENTO'
-      default:
-        return status.toUpperCase()
     }
   }
 

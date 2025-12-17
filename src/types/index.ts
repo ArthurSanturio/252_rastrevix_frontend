@@ -208,25 +208,27 @@ export interface RastreadorDadosResponse {
 }
 
 // Tipos de eventos de telemetria
-export enum RastreadorEventType {
-    PANICO = 111,
-    SOS = 112,
-    IGNICAO_LIGADA = 113,
-    IGNICAO_DESLIGADA = 114,
-    MOVIMENTO_INICIADO = 115,
-    MOVIMENTO_PARADO = 116,
-    VELOCIDADE_EXCEDIDA = 117,
-    BATERIA_BAIXA = 118,
-    ANTENA_CORTADA = 119,
-    CERCA_ENTRADA = 120,
-    CERCA_SAIDA = 121,
-    ACELERACAO_BRUSCA = 122,
-    FRENAGEM_BRUSCA = 123,
-    CURVA_BRUSCA = 124,
-    COLISAO = 125,
-    IDENTIFICACAO_RS232 = 126,
-    OUTROS = 127
-}
+export const RastreadorEventType = {
+    PANICO: 111,
+    SOS: 112,
+    IGNICAO_LIGADA: 113,
+    IGNICAO_DESLIGADA: 114,
+    MOVIMENTO_INICIADO: 115,
+    MOVIMENTO_PARADO: 116,
+    VELOCIDADE_EXCEDIDA: 117,
+    BATERIA_BAIXA: 118,
+    ANTENA_CORTADA: 119,
+    CERCA_ENTRADA: 120,
+    CERCA_SAIDA: 121,
+    ACELERACAO_BRUSCA: 122,
+    FRENAGEM_BRUSCA: 123,
+    CURVA_BRUSCA: 124,
+    COLISAO: 125,
+    IDENTIFICACAO_RS232: 126,
+    OUTROS: 127
+} as const;
+
+export type RastreadorEventType = typeof RastreadorEventType[keyof typeof RastreadorEventType];
 
 export interface EventoRastreador {
     id: string;

@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { clienteService, type Cliente } from '../services/clienteService';
-import { rastreadorService } from '../services/rastreadorService';
 import { Search, Plus, AlertTriangle } from 'lucide-react';
 import '../styles/dashboard-pages.css';
 
@@ -9,8 +8,6 @@ const TelemetriaEvento: React.FC = () => {
   const [clienteSelecionado, setClienteSelecionado] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(false);
-  const [eventos, setEventos] = useState<any[]>([]);
-  const [rastreadorSelecionado, setRastreadorSelecionado] = useState<string | null>(null);
 
   useEffect(() => {
     carregarClientes();
