@@ -8,32 +8,46 @@ const defaultOptions = {
     closeOnClick: true,
     closeButton: true,
     pauseOnHover: true,
-    draggable: true,
+    pauseOnFocusLoss: true,
+    draggable: false,
     theme: 'colored' as const,
+    enableMultiContainer: false,
 };
 
 // Toast de sucesso
 export const showSuccess = (message: string, options?: any) => {
-    toast.success(message, { ...defaultOptions, ...options });
+    toast.success(message, { 
+        ...defaultOptions, 
+        autoClose: options?.autoClose !== undefined ? options.autoClose : 3000,
+        ...options 
+    });
 };
 
 // Toast de erro
 export const showError = (message: string, options?: any) => {
     toast.error(message, {
         ...defaultOptions,
-        autoClose: 5000, // Erros ficam mais tempo
+        autoClose: options?.autoClose !== undefined ? options.autoClose : 5000, // Erros ficam mais tempo
         ...options
     });
 };
 
 // Toast de aviso
 export const showWarning = (message: string, options?: any) => {
-    toast.warning(message, { ...defaultOptions, ...options });
+    toast.warning(message, { 
+        ...defaultOptions, 
+        autoClose: options?.autoClose !== undefined ? options.autoClose : 3000,
+        ...options 
+    });
 };
 
 // Toast de informação
 export const showInfo = (message: string, options?: any) => {
-    toast.info(message, { ...defaultOptions, ...options });
+    toast.info(message, { 
+        ...defaultOptions, 
+        autoClose: options?.autoClose !== undefined ? options.autoClose : 3000,
+        ...options 
+    });
 };
 
 // Toast customizado

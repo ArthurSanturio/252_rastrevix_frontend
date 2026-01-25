@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { maskPhone, unmaskPhone, validatePhone } from '../utils/masks'
 
 interface Cliente {
     id: string
@@ -24,10 +25,12 @@ const ClienteEditarModal: React.FC<ClienteEditarModalProps> = ({ isOpen, onClose
 
     useEffect(() => {
         if (cliente) {
+            // Aplicar máscara no telefone ao carregar os dados
+            const telefoneComMascara = cliente.telefone ? maskPhone(cliente.telefone) : ''
             setFormData({
                 nome: cliente.nome,
                 email: cliente.email,
-                telefone: cliente.telefone,
+                telefone: telefoneComMascara,
                 empresa: cliente.empresa,
                 status: cliente.status
             })
@@ -36,10 +39,20 @@ const ClienteEditarModal: React.FC<ClienteEditarModalProps> = ({ isOpen, onClose
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }))
+        
+        // Aplicar máscara de telefone
+        if (name === 'telefone') {
+            const maskedValue = maskPhone(value)
+            setFormData(prev => ({
+                ...prev,
+                [name]: maskedValue
+            }))
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }))
+        }
 
         // Limpar erro quando o usuário começar a digitar
         if (errors[name as keyof Cliente]) {
@@ -65,6 +78,15 @@ const ClienteEditarModal: React.FC<ClienteEditarModalProps> = ({ isOpen, onClose
 
         if (!formData.telefone?.trim()) {
             newErrors.telefone = 'Telefone é obrigatório'
+        } else {
+            const unmasked = unmaskPhone(formData.telefone)
+            if (unmasked.length < 10 || unmasked.length > 11) {
+                newErrors.telefone = 'Telefone deve ter 10 ou 11 dígitos'
+            } else if (unmasked.substring(0, 2) === '00') {
+                newErrors.telefone = 'DDD não pode ser 00'
+            } else if (!validatePhone(formData.telefone)) {
+                newErrors.telefone = 'Telefone inválido. Digite um número válido'
+            }
         }
 
         if (!formData.empresa?.trim()) {

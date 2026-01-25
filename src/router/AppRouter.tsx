@@ -1,48 +1,48 @@
 import type React from "react"
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom"
+import { Navigate, Route, BrowserRouter as Router, Routes } from "react-router-dom"
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
-import '../styles/toast-custom.css'
-import Login from "../pages/Login"
-import Register from "../pages/Register"
-import Dashboard from "../pages/Dashboard"
-import Maps from "../pages/Maps"
+import Layout from "../components/Layout"
+import { AuthProvider } from "../contexts/AuthContext"
 import CadastroCliente from "../pages/CadastroCliente"
-import CadastroMaquina from "../pages/CadastroMaquina"
 import CadastroColaborador from "../pages/CadastroColaborador"
+import CadastroMaquina from "../pages/CadastroMaquina"
 import CadastroRastreador from "../pages/CadastroRastreador"
+import Configuracoes from "../pages/Configuracoes"
+import Dashboard from "../pages/Dashboard"
 import EstoqueChipGSM from "../pages/EstoqueChipGSM"
 import EstoqueEquipamento from "../pages/EstoqueEquipamento"
 import EstoqueFornecedorChipGSM from "../pages/EstoqueFornecedorChipGSM"
-import RelatorioParadaDeslocamento from "../pages/RelatorioParadaDeslocamento"
-import RelatorioHistorico from "../pages/RelatorioHistorico"
-import RelatorioMotoristaJornada from "../pages/RelatorioMotoristaJornada"
-import RelatorioLogistica from "../pages/RelatorioLogistica"
-import RelatorioEvento from "../pages/RelatorioEvento"
-import RelatorioManutencao from "../pages/RelatorioManutencao"
+import Integracao from "../pages/Integracao"
+import Login from "../pages/Login"
+import Maps from "../pages/Maps"
+import Perfil from "../pages/Perfil"
+import PerimetrosCerca from "../pages/PerimetrosCerca"
+import PerimetrosPonto from "../pages/PerimetrosPonto"
+import PerimetrosRota from "../pages/PerimetrosRota"
+import Register from "../pages/Register"
 import RelatorioAbastecimento from "../pages/RelatorioAbastecimento"
-import RelatorioMulta from "../pages/RelatorioMulta"
-import RelatorioViagem from "../pages/RelatorioViagem"
+import RelatorioAtraso from "../pages/RelatorioAtraso"
+import RelatorioCercas from "../pages/RelatorioCercas"
+import RelatorioChecklist from "../pages/RelatorioChecklist"
 import RelatorioCustoViagem from "../pages/RelatorioCustoViagem"
 import RelatorioEntrega from "../pages/RelatorioEntrega"
-import RelatorioChecklist from "../pages/RelatorioChecklist"
-import RelatorioVinculo from "../pages/RelatorioVinculo"
-import RelatorioPontos from "../pages/RelatorioPontos"
-import RelatorioCercas from "../pages/RelatorioCercas"
-import RelatorioAtraso from "../pages/RelatorioAtraso"
-import RelatorioMatrizCliente from "../pages/RelatorioMatrizCliente"
+import RelatorioEvento from "../pages/RelatorioEvento"
 import RelatorioFinanceiro from "../pages/RelatorioFinanceiro"
 import RelatorioFrota from "../pages/RelatorioFrota"
-import PerimetrosPonto from "../pages/PerimetrosPonto"
-import PerimetrosCerca from "../pages/PerimetrosCerca"
-import PerimetrosRota from "../pages/PerimetrosRota"
+import RelatorioHistorico from "../pages/RelatorioHistorico"
+import RelatorioLogistica from "../pages/RelatorioLogistica"
+import RelatorioManutencao from "../pages/RelatorioManutencao"
+import RelatorioMatrizCliente from "../pages/RelatorioMatrizCliente"
+import RelatorioMotoristaJornada from "../pages/RelatorioMotoristaJornada"
+import RelatorioMulta from "../pages/RelatorioMulta"
+import RelatorioParadaDeslocamento from "../pages/RelatorioParadaDeslocamento"
+import RelatorioPontos from "../pages/RelatorioPontos"
+import RelatorioViagem from "../pages/RelatorioViagem"
+import RelatorioVinculo from "../pages/RelatorioVinculo"
 import TelemetriaEvento from "../pages/TelemetriaEvento"
-import Integracao from "../pages/Integracao"
-import Perfil from "../pages/Perfil"
-import Configuracoes from "../pages/Configuracoes"
-import Layout from "../components/Layout"
+import '../styles/toast-custom.css'
 import ProtectedRoute from "./ProtectedRoute"
-import { AuthProvider } from "../contexts/AuthContext"
 
 const AppRouter: React.FC = () => {
   return (
@@ -111,13 +111,14 @@ const AppRouter: React.FC = () => {
           autoClose={3000}
           hideProgressBar={false}
           newestOnTop={false}
-          closeOnClick
+          closeOnClick={true}
           rtl={false}
-          pauseOnFocusLoss
+          pauseOnFocusLoss={true}
           draggable={false}
-          pauseOnHover
+          pauseOnHover={true}
           limit={5}
           theme="colored"
+          closeButton={true}
           style={{ zIndex: 9999 }}
         />
       </Router>

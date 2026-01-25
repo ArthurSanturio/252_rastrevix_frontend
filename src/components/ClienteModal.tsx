@@ -1,4 +1,5 @@
 import React, { useState } from 'react'
+import { maskPhone, unmaskPhone, validatePhone } from '../utils/masks'
 
 interface ClienteFormData {
     nome: string
@@ -27,10 +28,20 @@ const ClienteModal: React.FC<ClienteModalProps> = ({ isOpen, onClose, onSave }) 
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target
-        setFormData(prev => ({
-            ...prev,
-            [name]: value
-        }))
+        
+        // Aplicar máscara de telefone
+        if (name === 'telefone') {
+            const maskedValue = maskPhone(value)
+            setFormData(prev => ({
+                ...prev,
+                [name]: maskedValue
+            }))
+        } else {
+            setFormData(prev => ({
+                ...prev,
+                [name]: value
+            }))
+        }
 
         // Limpar erro quando o usuário começar a digitar
         if (errors[name as keyof ClienteFormData]) {
@@ -56,6 +67,15 @@ const ClienteModal: React.FC<ClienteModalProps> = ({ isOpen, onClose, onSave }) 
 
         if (!formData.telefone.trim()) {
             newErrors.telefone = 'Telefone é obrigatório'
+        } else {
+            const unmasked = unmaskPhone(formData.telefone)
+            if (unmasked.length < 10 || unmasked.length > 11) {
+                newErrors.telefone = 'Telefone deve ter 10 ou 11 dígitos'
+            } else if (unmasked.substring(0, 2) === '00') {
+                newErrors.telefone = 'DDD não pode ser 00'
+            } else if (!validatePhone(formData.telefone)) {
+                newErrors.telefone = 'Telefone inválido. Digite um número válido'
+            }
         }
 
         if (!formData.empresa.trim()) {
@@ -70,6 +90,9 @@ const ClienteModal: React.FC<ClienteModalProps> = ({ isOpen, onClose, onSave }) 
         e.preventDefault()
 
         if (validateForm()) {
+            // Remover máscara antes de salvar (opcional - depende se o backend espera com ou sem máscara)
+            // Se o backend espera com máscara, mantenha formData.telefone
+            // Se o backend espera sem máscara, use: telefone: unmaskPhone(formData.telefone)
             onSave(formData)
             setFormData({
                 nome: '',
